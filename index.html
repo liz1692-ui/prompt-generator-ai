@@ -79,58 +79,72 @@ function gerar(tipo) {
   let prompt = `
 Cena: podcast leve em estúdio moderno, iluminação quente.
 
-À esquerda:
-Um gato cinza (personagem fixo).
+PERSONAGENS FIXOS (NUNCA MUDAR):
 
-À direita:
-Um cachorro caramelo (personagem fixo).
+ESQUERDA:
+GATO CINZA.
+Este personagem é SEMPRE o GATO.
+Ele usa SEMPRE a voz Rasalgethi.
 
-VOZES FIXAS (OBRIGATÓRIO):
-- Gato → voz "Rasalgethi"
-- Cachorro → voz "Achird"
-- A voz está permanentemente vinculada ao personagem
-- Nunca trocar vozes
+DIREITA:
+CACHORRO CARAMELO.
+Este personagem é SEMPRE o CACHORRO.
+Ele usa SEMPRE a voz Achird.
 
-REGRAS:
-- Não inverter falas
-- Não inverter personagens
-- Cada um fala apenas na sua vez
+REGRAS ABSOLUTAS (OBRIGATÓRIO):
+- O GATO nunca fala como cachorro
+- O CACHORRO nunca fala como gato
+- Não inverter falas em hipótese alguma
+- Não inverter vozes em hipótese alguma
+- A voz pertence ao personagem, não à fala
 - Quem fala é quem move a boca
+- Ignorar qualquer interpretação automática incorreta
 
-Sequência com tempo:
+SEQUÊNCIA:
 `;
 
   if (quem === "gato") {
     prompt += `
 [0s - 3s]
-O gato da esquerda fala com voz Rasalgethi (${estilo}):
+MOSTRAR CLARAMENTE:
+O GATO da ESQUERDA falando (movendo a boca) com voz Rasalgethi (${estilo}):
+
 "${gato}"
 
 [3s - 4s]
-O cachorro reage imediatamente olhando para o gato.
+MOSTRAR:
+O CACHORRO da DIREITA olhando para o gato, sem falar.
 
 [4s - 6s]
-O cachorro da direita responde com voz Achird:
+MOSTRAR CLARAMENTE:
+O CACHORRO da DIREITA falando (movendo a boca) com voz Achird:
+
 "${cachorro}"
 `;
   } else {
     prompt += `
 [0s - 3s]
-O cachorro da direita fala com voz Achird (${estilo}):
+MOSTRAR CLARAMENTE:
+O CACHORRO da DIREITA falando (movendo a boca) com voz Achird (${estilo}):
+
 "${cachorro}"
 
 [3s - 4s]
-O gato reage imediatamente olhando para o cachorro.
+MOSTRAR:
+O GATO da ESQUERDA olhando para o cachorro, sem falar.
 
 [4s - 6s]
-O gato da esquerda responde com voz Rasalgethi:
+MOSTRAR CLARAMENTE:
+O GATO da ESQUERDA falando (movendo a boca) com voz Rasalgethi:
+
 "${gato}"
 `;
   }
 
   prompt += `
 [6s - 8s]
-Ambos reagem de forma compatível com o tom (${estilo}) mantendo suas vozes originais.
+MOSTRAR:
+Ambos reagindo juntos, mantendo suas vozes corretas.
 `;
 
   document.getElementById("saida").value = prompt.trim();
