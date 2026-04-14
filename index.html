@@ -73,8 +73,8 @@ function gerar(tipo) {
   let estilo = "";
   if (tipo === "normal") estilo = "tom natural";
   if (tipo === "engracado") estilo = "tom debochado e irônico";
-  if (tipo === "treta") estilo = "tom provocador, leve tensão";
-  if (tipo === "viral") estilo = "timing perfeito de humor, estilo meme";
+  if (tipo === "treta") estilo = "tom provocador";
+  if (tipo === "viral") estilo = "timing de humor estilo meme";
 
   let prompt = `
 Cena: podcast leve em estúdio moderno, iluminação quente.
@@ -83,22 +83,36 @@ PERSONAGENS FIXOS (NUNCA MUDAR):
 
 ESQUERDA:
 GATO CINZA.
+Animal realista.
+Sem roupa.
+Sem acessórios.
+Sem humanização.
+Não adicionar nenhum item ao corpo.
 Este personagem é SEMPRE o GATO.
 Ele usa SEMPRE a voz Rasalgethi.
 
 DIREITA:
 CACHORRO CARAMELO.
+Animal realista.
+Sem roupa.
+Sem acessórios.
+Sem humanização.
+Não adicionar nenhum item ao corpo.
 Este personagem é SEMPRE o CACHORRO.
 Ele usa SEMPRE a voz Achird.
 
-REGRAS ABSOLUTAS (OBRIGATÓRIO):
-- O GATO nunca fala como cachorro
-- O CACHORRO nunca fala como gato
-- Não inverter falas em hipótese alguma
-- Não inverter vozes em hipótese alguma
-- A voz pertence ao personagem, não à fala
+REGRAS ABSOLUTAS:
+- Nenhum personagem pode usar roupa
+- Nenhum personagem pode usar acessórios
+- Não modificar aparência
+- Não transformar em humano
+- Não adicionar elementos extras
+
+- Não inverter falas
+- Não inverter personagens
+- Não inverter vozes
+- A voz pertence ao personagem
 - Quem fala é quem move a boca
-- Ignorar qualquer interpretação automática incorreta
 
 SEQUÊNCIA:
 `;
@@ -107,17 +121,16 @@ SEQUÊNCIA:
     prompt += `
 [0s - 3s]
 MOSTRAR CLARAMENTE:
-O GATO da ESQUERDA falando (movendo a boca) com voz Rasalgethi (${estilo}):
+O GATO da ESQUERDA falando com voz Rasalgethi (${estilo}):
 
 "${gato}"
 
 [3s - 4s]
-MOSTRAR:
-O CACHORRO da DIREITA olhando para o gato, sem falar.
+O cachorro observa.
 
 [4s - 6s]
 MOSTRAR CLARAMENTE:
-O CACHORRO da DIREITA falando (movendo a boca) com voz Achird:
+O CACHORRO da DIREITA falando com voz Achird:
 
 "${cachorro}"
 `;
@@ -125,17 +138,16 @@ O CACHORRO da DIREITA falando (movendo a boca) com voz Achird:
     prompt += `
 [0s - 3s]
 MOSTRAR CLARAMENTE:
-O CACHORRO da DIREITA falando (movendo a boca) com voz Achird (${estilo}):
+O CACHORRO da DIREITA falando com voz Achird (${estilo}):
 
 "${cachorro}"
 
 [3s - 4s]
-MOSTRAR:
-O GATO da ESQUERDA olhando para o cachorro, sem falar.
+O gato observa.
 
 [4s - 6s]
 MOSTRAR CLARAMENTE:
-O GATO da ESQUERDA falando (movendo a boca) com voz Rasalgethi:
+O GATO da ESQUERDA falando com voz Rasalgethi:
 
 "${gato}"
 `;
@@ -143,8 +155,7 @@ O GATO da ESQUERDA falando (movendo a boca) com voz Rasalgethi:
 
   prompt += `
 [6s - 8s]
-MOSTRAR:
-Ambos reagindo juntos, mantendo suas vozes corretas.
+Ambos reagem naturalmente, mantendo aparência original.
 `;
 
   document.getElementById("saida").value = prompt.trim();
