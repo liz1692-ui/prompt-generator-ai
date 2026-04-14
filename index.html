@@ -49,7 +49,6 @@
   <option value="cachorro">Cachorro</option>
 </select>
 
-<!-- BOTÕES NOVOS -->
 <button onclick="gerar('normal')">Normal</button>
 <button onclick="gerar('engracado')">Engraçado</button>
 <button onclick="gerar('treta')">Treta</button>
@@ -81,15 +80,22 @@ function gerar(tipo) {
 Cena: podcast leve em estúdio moderno, iluminação quente.
 
 À esquerda:
-Um gato cinza, claramente o gato.
+Um gato cinza (personagem fixo).
 
 À direita:
-Um cachorro caramelo, claramente o cachorro.
+Um cachorro caramelo (personagem fixo).
 
-Regra obrigatória:
-O gato nunca fala como cachorro.
-O cachorro nunca fala como gato.
-Cada personagem fala apenas na sua vez.
+VOZES FIXAS (OBRIGATÓRIO):
+- Gato → voz "Rasalgethi"
+- Cachorro → voz "Achird"
+- A voz está permanentemente vinculada ao personagem
+- Nunca trocar vozes
+
+REGRAS:
+- Não inverter falas
+- Não inverter personagens
+- Cada um fala apenas na sua vez
+- Quem fala é quem move a boca
 
 Sequência com tempo:
 `;
@@ -97,34 +103,34 @@ Sequência com tempo:
   if (quem === "gato") {
     prompt += `
 [0s - 3s]
-O gato da esquerda fala (${estilo}):
+O gato da esquerda fala com voz Rasalgethi (${estilo}):
 "${gato}"
 
 [3s - 4s]
 O cachorro reage imediatamente olhando para o gato.
 
 [4s - 6s]
-O cachorro da direita responde sem hesitar:
+O cachorro da direita responde com voz Achird:
 "${cachorro}"
 `;
   } else {
     prompt += `
 [0s - 3s]
-O cachorro da direita fala (${estilo}):
+O cachorro da direita fala com voz Achird (${estilo}):
 "${cachorro}"
 
 [3s - 4s]
 O gato reage imediatamente olhando para o cachorro.
 
 [4s - 6s]
-O gato da esquerda responde sem hesitar:
+O gato da esquerda responde com voz Rasalgethi:
 "${gato}"
 `;
   }
 
   prompt += `
 [6s - 8s]
-Ambos reagem de forma compatível com o tom (${estilo}).
+Ambos reagem de forma compatível com o tom (${estilo}) mantendo suas vozes originais.
 `;
 
   document.getElementById("saida").value = prompt.trim();
