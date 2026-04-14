@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Prompt Generator AI</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+    }
+
+    input, select, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      background: #22c55e;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    textarea {
+      height: 200px;
+      background: #1e293b;
+      color: #22c55e;
+    }
+  </style>
+</head>
+<body>
+
+<h2>🐱🐶 Gerador de Prompt</h2>
+
+<label>Fala do Gato:</label>
+<input id="gato">
+
+<label>Fala do Cachorro:</label>
+<input id="cachorro">
+
+<label>Quem começa:</label>
+<select id="quem">
+  <option value="gato">Gato</option>
+  <option value="cachorro">Cachorro</option>
+</select>
+
+<label>Tem gargalhada?</label>
+<select id="risada">
+  <option value="sim">Sim</option>
+  <option value="nao">Não</option>
+</select>
+
+<button onclick="gerar()">Gerar Prompt</button>
+
+<textarea id="saida"></textarea>
+
+<script>
+function gerar() {
+  let gato = document.getElementById("gato").value;
+  let cachorro = document.getElementById("cachorro").value;
+  let quem = document.getElementById("quem").value;
+  let risada = document.getElementById("risada").value;
+
+  // Correção automática BR
+  cachorro = cachorro.replace("Corinthians", "Corintias");
+
+  let primeira = quem === "gato" ? "cat" : "dog";
+  let segunda = quem === "gato" ? "dog" : "cat";
+
+  let fala1 = quem === "gato" ? gato : cachorro;
+  let fala2 = quem === "gato" ? cachorro : gato;
+
+  let prompt = {
+    scene: "Podcast automático",
+    duration: "8s",
+    style: "ultra-realistic cinematic, natural Brazilian voice",
+
+    voice_consistency: {
+      cat: "male voice only, deep tone, Brazilian Portuguese",
+      dog: "male voice only, natural Brazilian Portuguese"
+    },
+
+    characters: [
+      { id: "dog", description: "cachorro caramelo" },
+      { id: "cat", description: "gato cinza" }
+    ],
+
+    lip_sync: "precise articulation, Brazilian Portuguese phonemes",
+
+    action_timeline: [
+      {
+        time: "0s-3s",
+        dialogue: {
+          character: primeira,
+          text: fala1,
+          language: "Português do Brasil"
+        }
+      },
+      {
+        time: "3s-5s",
+        dialogue: {
+          character: segunda,
+          text: fala2,
+          language: "Português do Brasil"
+        }
+      }
+    ]
+  };
+
+  if (risada === "sim") {
+    prompt.action_timeline.push({
+      time: "5s-8s",
+      action: "personagem começa a rir e entra em gargalhada",
+      audio: "risada natural, crescente"
+    });
+  }
+
+  document.getElementById("saida").value = JSON.stringify(prompt, null, 2);
+}
+</script>
+
+</body>
+</html>
