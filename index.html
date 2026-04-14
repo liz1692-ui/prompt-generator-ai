@@ -66,7 +66,7 @@ function gerar() {
   let quem = document.getElementById("quem").value;
   let risada = document.getElementById("risada").value;
 
-  // Correção automática BR
+  // Correção BR automática
   cachorro = cachorro.replace(/Corinthians/gi, "Corintias");
 
   let primeira = quem === "gato" ? "cat" : "dog";
@@ -76,21 +76,15 @@ function gerar() {
   let fala2 = quem === "gato" ? cachorro : gato;
 
   let prompt = {
-    scene: "conversa leve entre gato e cachorro em português do Brasil",
+    scene: "light discussion",
     duration: "8s",
-    style: "ultra-realista cinematográfico, humor leve, foco em conversa natural em pt-BR",
-    camera: "plano médio fixo com leve aproximação",
-    environment: "estúdio de podcast moderno, iluminação quente e aconchegante",
+    style: "ultra-realistic cinematic",
+    camera: "fixed medium shot",
+    environment: "estúdio de podcast moderno",
 
     characters: [
-      {
-        id: "dog",
-        description: "cachorro caramelo brasileiro, expressivo, usando headset e microfone, lado esquerdo"
-      },
-      {
-        id: "cat",
-        description: "gato cinza com olhos verdes, expressão curiosa, usando headset e microfone, lado direito"
-      }
+      { id: "dog", description: "cachorro caramelo brasileiro" },
+      { id: "cat", description: "gato cinza expressivo" }
     ],
 
     action_timeline: [
@@ -119,7 +113,7 @@ function gerar() {
     prompt.action_timeline.push({
       time: "6s-8s",
       action: "personagem começa a rir e entra em gargalhada",
-      audio: "risada masculina natural, crescente, não robótica"
+      audio: "risada natural, crescente, bem expressiva"
     });
   }
 
