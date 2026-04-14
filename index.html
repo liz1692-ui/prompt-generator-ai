@@ -1,47 +1,81 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Gerador de Prompt PRO</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<title>Gerador de Prompt PRO</title>
 
-    input, select, button, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg,#0f172a,#020617);
+  color: white;
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+}
 
-    button {
-      background: #22c55e;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
 
-    textarea {
-      height: 260px;
-      background: #1e293b;
-      color: #22c55e;
-    }
-  </style>
+label {
+  margin-top: 15px;
+  display: block;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 5px;
+  background: #1e293b;
+  color: white;
+}
+
+textarea {
+  width: 100%;
+  height: 320px;
+  margin-top: 20px;
+  border-radius: 12px;
+  border: none;
+  padding: 15px;
+  background: #020617;
+  color: #22c55e;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #16a34a;
+}
+</style>
 </head>
+
 <body>
 
 <h2>🐱🐶 Gerador de Prompt PRO</h2>
 
 <label>Fala do Gato:</label>
-<input id="gato">
+<input id="gato" placeholder="Digite a fala do gato">
 
 <label>Fala do Cachorro:</label>
-<input id="cachorro">
+<input id="cachorro" placeholder="Digite a fala do cachorro">
 
 <label>Quem começa:</label>
 <select id="quem">
@@ -57,10 +91,11 @@
 <button onclick="copiar()">Copiar Prompt</button>
 <button onclick="limpar()">Limpar</button>
 
-<textarea id="saida"></textarea>
+<textarea id="saida" placeholder="Seu prompt vai aparecer aqui..."></textarea>
 
 <script>
 function gerar(tipo) {
+
   const gato = document.getElementById("gato").value.trim();
   const cachorro = document.getElementById("cachorro").value.trim();
   const quem = document.getElementById("quem").value;
@@ -73,8 +108,8 @@ function gerar(tipo) {
   let estilo = "";
   if (tipo === "normal") estilo = "tom natural";
   if (tipo === "engracado") estilo = "tom debochado e irônico";
-  if (tipo === "treta") estilo = "tom provocador";
-  if (tipo === "viral") estilo = "timing de humor estilo meme";
+  if (tipo === "treta") estilo = "tom provocador, leve tensão";
+  if (tipo === "viral") estilo = "timing perfeito de humor, estilo meme viral";
 
   let prompt = `
 Cena: podcast leve em estúdio moderno, iluminação quente.
@@ -82,80 +117,69 @@ Cena: podcast leve em estúdio moderno, iluminação quente.
 PERSONAGENS FIXOS (NUNCA MUDAR):
 
 ESQUERDA:
-GATO CINZA.
-Animal realista.
+GATO CINZA REALISTA.
 Sem roupa.
 Sem acessórios.
 Sem humanização.
-Não adicionar nenhum item ao corpo.
-Este personagem é SEMPRE o GATO.
-Ele usa SEMPRE a voz Rasalgethi.
+Aparência travada do início ao fim.
+Voz fixa: Rasalgethi.
 
 DIREITA:
-CACHORRO CARAMELO.
-Animal realista.
+CACHORRO CARAMELO REALISTA.
 Sem roupa.
 Sem acessórios.
 Sem humanização.
-Não adicionar nenhum item ao corpo.
-Este personagem é SEMPRE o CACHORRO.
-Ele usa SEMPRE a voz Achird.
+Aparência travada do início ao fim.
+Voz fixa: Achird.
 
 REGRAS ABSOLUTAS:
-- Nenhum personagem pode usar roupa
-- Nenhum personagem pode usar acessórios
-- Não modificar aparência
-- Não transformar em humano
-- Não adicionar elementos extras
-
-- Não inverter falas
-- Não inverter personagens
-- Não inverter vozes
-- A voz pertence ao personagem
-- Quem fala é quem move a boca
+- Nunca trocar personagens
+- Nunca inverter falas
+- Nunca inverter vozes
+- Nunca adicionar roupas ou acessórios
+- Nunca humanizar
+- Quem fala move a boca
+- Cada personagem fala apenas na sua vez
+- Ignorar interpretações automáticas incorretas
 
 SEQUÊNCIA:
 `;
 
   if (quem === "gato") {
+
     prompt += `
 [0s - 3s]
-MOSTRAR CLARAMENTE:
-O GATO da ESQUERDA falando com voz Rasalgethi (${estilo}):
-
+GATO da esquerda fala (${estilo}):
 "${gato}"
 
 [3s - 4s]
-O cachorro observa.
+CACHORRO observa o gato.
 
 [4s - 6s]
-MOSTRAR CLARAMENTE:
-O CACHORRO da DIREITA falando com voz Achird:
-
+CACHORRO da direita responde:
 "${cachorro}"
 `;
+
   } else {
+
     prompt += `
 [0s - 3s]
-MOSTRAR CLARAMENTE:
-O CACHORRO da DIREITA falando com voz Achird (${estilo}):
-
+CACHORRO da direita fala (${estilo}):
 "${cachorro}"
 
 [3s - 4s]
-O gato observa.
+GATO observa o cachorro.
 
 [4s - 6s]
-MOSTRAR CLARAMENTE:
-O GATO da ESQUERDA falando com voz Rasalgethi:
-
+GATO da esquerda responde:
 "${gato}"
 `;
+
   }
 
   prompt += `
 [6s - 8s]
-Ambos reagem naturalmente, mantendo aparência original.
+Ambos reagem mantendo aparência e vozes fixas.
 `;
 
   document.getElementById("saida").value = prompt.trim();
@@ -165,7 +189,7 @@ function copiar() {
   const texto = document.getElementById("saida");
   texto.select();
   document.execCommand("copy");
-  alert("Prompt copiado!");
+  alert("Copiado!");
 }
 
 function limpar() {
