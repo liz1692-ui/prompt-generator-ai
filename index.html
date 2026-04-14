@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Prompt Generator AI</title>
+  <title>Gerador de Prompt PRO</title>
   <style>
     body {
       font-family: Arial;
@@ -27,7 +27,7 @@
     }
 
     textarea {
-      height: 200px;
+      height: 220px;
       background: #1e293b;
       color: #22c55e;
     }
@@ -72,28 +72,46 @@ function gerar() {
     return;
   }
 
-  let texto = "";
+  let prompt = `
+Cena: podcast leve em estúdio moderno, iluminação quente.
+
+Personagens:
+- Gato cinza sentado à esquerda
+- Cachorro caramelo sentado à direita
+
+Regra obrigatória:
+Cada personagem fala apenas na sua vez. Não misturar falas.
+
+Sequência:
+`;
 
   if (quem === "gato") {
-    texto += 'Um gato diz: "' + gato + '".\n\n';
-    texto += 'O cachorro responde: "' + cachorro + '".\n\n';
+    prompt += `
+1. O gato fala:
+"${gato}"
+
+2. O cachorro responde:
+"${cachorro}"
+`;
   } else {
-    texto += 'Um cachorro diz: "' + cachorro + '".\n\n';
-    texto += 'O gato responde: "' + gato + '".\n\n';
+    prompt += `
+1. O cachorro fala:
+"${cachorro}"
+
+2. O gato responde:
+"${gato}"
+`;
   }
 
-  if (risada === "sim") {
-    texto += "Os dois começam a rir juntos de forma descontraída.";
-  } else {
-    texto += "Clima leve, eles se encaram em silêncio.";
-  }
+  prompt += `
+3. ${
+    risada === "sim"
+      ? "Os dois riem juntos de forma natural e descontraída."
+      : "Eles ficam em silêncio por um instante, clima leve."
+}
+`;
 
-  const promptFinal =
-`Cena: podcast leve em estúdio moderno, iluminação quente.
-
-${texto}`;
-
-  document.getElementById("saida").value = promptFinal;
+  document.getElementById("saida").value = prompt.trim();
 }
 
 function limpar() {
