@@ -1,40 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Prompt Generator AI</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+    }
+
+    input, select, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      background: #22c55e;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    textarea {
+      height: 200px;
+      background: #1e293b;
+      color: #22c55e;
+    }
+  </style>
+</head>
+<body>
+
+<h2>🐱🐶 Gerador de Prompt PRO</h2>
+
+<label>Fala do Gato:</label>
+<input id="gato">
+
+<label>Fala do Cachorro:</label>
+<input id="cachorro">
+
+<label>Quem começa:</label>
+<select id="quem">
+  <option value="gato">Gato</option>
+  <option value="cachorro">Cachorro</option>
+</select>
+
+<label>Tem gargalhada?</label>
+<select id="risada">
+  <option value="sim">Sim</option>
+  <option value="nao">Não</option>
+</select>
+
+<button onclick="gerar()">Gerar Prompt</button>
+<button onclick="limpar()">Limpar</button>
+
+<textarea id="saida"></textarea>
+
 <script>
 function gerar() {
-  let gato = document.getElementById("gato").value.trim();
-  let cachorro = document.getElementById("cachorro").value.trim();
-  let quem = document.getElementById("quem").value;
-  let risada = document.getElementById("risada").value;
+  const gato = document.getElementById("gato").value.trim();
+  const cachorro = document.getElementById("cachorro").value.trim();
+  const quem = document.getElementById("quem").value;
+  const risada = document.getElementById("risada").value;
 
   if (!gato || !cachorro) {
     alert("Preencha as falas!");
     return;
   }
 
-  let primeira, segunda;
+  let texto = "";
 
   if (quem === "gato") {
-    primeira = `Um gato diz: "${gato}".`;
-    segunda = `O cachorro responde: "${cachorro}".`;
+    texto += 'Um gato diz: "' + gato + '".\n\n';
+    texto += 'O cachorro responde: "' + cachorro + '".\n\n';
   } else {
-    primeira = `Um cachorro diz: "${cachorro}".`;
-    segunda = `O gato responde: "${gato}".`;
+    texto += 'Um cachorro diz: "' + cachorro + '".\n\n';
+    texto += 'O gato responde: "' + gato + '".\n\n';
   }
 
-  let final = risada === "sim"
-    ? "Os dois começam a rir juntos de forma descontraída."
-    : "Eles ficam em silêncio por um instante, clima leve.";
+  if (risada === "sim") {
+    texto += "Os dois começam a rir juntos de forma descontraída.";
+  } else {
+    texto += "Clima leve, eles se encaram em silêncio.";
+  }
 
-  let prompt = `
-Cena: podcast leve em estúdio moderno, iluminação quente.
+  const promptFinal =
+`Cena: podcast leve em estúdio moderno, iluminação quente.
 
-${primeira}
+${texto}`;
 
-${segunda}
-
-${final}
-  `;
-
-  document.getElementById("saida").value = prompt.trim();
+  document.getElementById("saida").value = promptFinal;
 }
 
 function limpar() {
@@ -43,3 +102,6 @@ function limpar() {
   document.getElementById("saida").value = "";
 }
 </script>
+
+</body>
+</html>
