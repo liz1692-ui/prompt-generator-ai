@@ -1,64 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>Prompt Generator AI</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      padding: 20px;
-    }
-
-    input, select, button, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-    }
-
-    button {
-      background: #22c55e;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    textarea {
-      height: 200px;
-      background: #1e293b;
-      color: #22c55e;
-    }
-  </style>
-</head>
-<body>
-
-<h2>🐱🐶 Gerador de Prompt PRO</h2>
-
-<label>Fala do Gato:</label>
-<input id="gato">
-
-<label>Fala do Cachorro:</label>
-<input id="cachorro">
-
-<label>Quem começa:</label>
-<select id="quem">
-  <option value="gato">Gato</option>
-  <option value="cachorro">Cachorro</option>
-</select>
-
-<label>Tem gargalhada?</label>
-<select id="risada">
-  <option value="sim">Sim</option>
-  <option value="nao">Não</option>
-</select>
-
-<button onclick="gerar()">Gerar Prompt</button>
-
-<textarea id="saida"></textarea>
-
 <script>
 function gerar() {
   let gato = document.getElementById("gato").value.trim();
@@ -66,60 +5,41 @@ function gerar() {
   let quem = document.getElementById("quem").value;
   let risada = document.getElementById("risada").value;
 
-  // Correção BR automática
-  cachorro = cachorro.replace(/Corinthians/gi, "Corintias");
-
-  let primeira = quem === "gato" ? "cat" : "dog";
-  let segunda = quem === "gato" ? "dog" : "cat";
-
-  let fala1 = quem === "gato" ? gato : cachorro;
-  let fala2 = quem === "gato" ? cachorro : gato;
-
-  let prompt = {
-    scene: "light discussion",
-    duration: "8s",
-    style: "ultra-realistic cinematic",
-    camera: "fixed medium shot",
-    environment: "estúdio de podcast moderno",
-
-    characters: [
-      { id: "dog", description: "cachorro caramelo brasileiro" },
-      { id: "cat", description: "gato cinza expressivo" }
-    ],
-
-    action_timeline: [
-      {
-        time: "0s-3s",
-        dialogue: {
-          character: primeira,
-          text: fala1,
-          language: "pt-BR"
-        },
-        audio: "voz natural, ritmo de conversa, sotaque brasileiro"
-      },
-      {
-        time: "3s-6s",
-        dialogue: {
-          character: segunda,
-          text: fala2,
-          language: "pt-BR"
-        },
-        audio: "voz natural, ritmo de conversa, sotaque brasileiro"
-      }
-    ]
-  };
-
-  if (risada === "sim") {
-    prompt.action_timeline.push({
-      time: "6s-8s",
-      action: "personagem começa a rir e entra em gargalhada",
-      audio: "risada natural, crescente, bem expressiva"
-    });
+  if (!gato || !cachorro) {
+    alert("Preencha as falas!");
+    return;
   }
 
-  document.getElementById("saida").value = JSON.stringify(prompt, null, 2);
+  let primeira, segunda;
+
+  if (quem === "gato") {
+    primeira = `Um gato diz: "${gato}".`;
+    segunda = `O cachorro responde: "${cachorro}".`;
+  } else {
+    primeira = `Um cachorro diz: "${cachorro}".`;
+    segunda = `O gato responde: "${gato}".`;
+  }
+
+  let final = risada === "sim"
+    ? "Os dois começam a rir juntos de forma descontraída."
+    : "Eles ficam em silêncio por um instante, clima leve.";
+
+  let prompt = `
+Cena: podcast leve em estúdio moderno, iluminação quente.
+
+${primeira}
+
+${segunda}
+
+${final}
+  `;
+
+  document.getElementById("saida").value = prompt.trim();
+}
+
+function limpar() {
+  document.getElementById("gato").value = "";
+  document.getElementById("cachorro").value = "";
+  document.getElementById("saida").value = "";
 }
 </script>
-
-</body>
-</html>
