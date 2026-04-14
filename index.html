@@ -49,44 +49,46 @@
   <option value="cachorro">Cachorro</option>
 </select>
 
-<label>Tem gargalhada?</label>
-<select id="risada">
-  <option value="sim">Sim</option>
-  <option value="nao">Não</option>
-</select>
+<!-- BOTÕES NOVOS -->
+<button onclick="gerar('normal')">Normal</button>
+<button onclick="gerar('engracado')">Engraçado</button>
+<button onclick="gerar('treta')">Treta</button>
+<button onclick="gerar('viral')">Viral Forte</button>
 
-<button onclick="gerar()">Gerar Prompt</button>
 <button onclick="copiar()">Copiar Prompt</button>
 <button onclick="limpar()">Limpar</button>
 
 <textarea id="saida"></textarea>
 
 <script>
-function gerar() {
+function gerar(tipo) {
   const gato = document.getElementById("gato").value.trim();
   const cachorro = document.getElementById("cachorro").value.trim();
   const quem = document.getElementById("quem").value;
-  const risada = document.getElementById("risada").value;
 
   if (!gato || !cachorro) {
     alert("Preencha as falas!");
     return;
   }
 
+  let estilo = "";
+  if (tipo === "normal") estilo = "tom natural";
+  if (tipo === "engracado") estilo = "tom debochado e irônico";
+  if (tipo === "treta") estilo = "tom provocador, leve tensão";
+  if (tipo === "viral") estilo = "timing perfeito de humor, estilo meme";
+
   let prompt = `
 Cena: podcast leve em estúdio moderno, iluminação quente.
 
-Enquadramento fixo:
-
 À esquerda:
-Um gato cinza, claramente identificado como o gato.
+Um gato cinza, claramente o gato.
 
 À direita:
-Um cachorro caramelo, claramente identificado como o cachorro.
+Um cachorro caramelo, claramente o cachorro.
 
 Regra obrigatória:
-O gato NUNCA pode falar como cachorro.
-O cachorro NUNCA pode falar como gato.
+O gato nunca fala como cachorro.
+O cachorro nunca fala como gato.
 Cada personagem fala apenas na sua vez.
 
 Sequência com tempo:
@@ -95,38 +97,34 @@ Sequência com tempo:
   if (quem === "gato") {
     prompt += `
 [0s - 3s]
-O gato da esquerda abre a boca e fala:
+O gato da esquerda fala (${estilo}):
 "${gato}"
 
 [3s - 4s]
-O cachorro da direita olha para o gato e reage imediatamente.
+O cachorro reage imediatamente olhando para o gato.
 
 [4s - 6s]
-O cachorro da direita abre a boca e responde sem hesitar:
+O cachorro da direita responde sem hesitar:
 "${cachorro}"
 `;
   } else {
     prompt += `
 [0s - 3s]
-O cachorro da direita abre a boca e fala:
+O cachorro da direita fala (${estilo}):
 "${cachorro}"
 
 [3s - 4s]
-O gato da esquerda olha para o cachorro e reage imediatamente.
+O gato reage imediatamente olhando para o cachorro.
 
 [4s - 6s]
-O gato da esquerda abre a boca e responde sem hesitar:
+O gato da esquerda responde sem hesitar:
 "${gato}"
 `;
   }
 
   prompt += `
 [6s - 8s]
-${
-  risada === "sim"
-    ? "Ambos riem juntos de forma natural e descontraída."
-    : "Eles se encaram por um instante, clima leve."
-}
+Ambos reagem de forma compatível com o tom (${estilo}).
 `;
 
   document.getElementById("saida").value = prompt.trim();
