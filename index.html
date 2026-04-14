@@ -27,7 +27,7 @@
     }
 
     textarea {
-      height: 220px;
+      height: 240px;
       background: #1e293b;
       color: #22c55e;
     }
@@ -75,39 +75,50 @@ function gerar() {
   let prompt = `
 Cena: podcast leve em estúdio moderno, iluminação quente.
 
-Personagens:
+Enquadramento fixo:
 - Gato cinza sentado à esquerda
 - Cachorro caramelo sentado à direita
 
 Regra obrigatória:
 Cada personagem fala apenas na sua vez. Não misturar falas.
 
-Sequência:
+Sequência com tempo:
 `;
 
   if (quem === "gato") {
     prompt += `
-1. O gato fala:
+[0s - 3s]
+O gato fala:
 "${gato}"
 
-2. O cachorro responde:
+[3s - 4s]
+O cachorro reage imediatamente, olhando para o gato.
+
+[4s - 6s]
+O cachorro responde sem hesitar:
 "${cachorro}"
 `;
   } else {
     prompt += `
-1. O cachorro fala:
+[0s - 3s]
+O cachorro fala:
 "${cachorro}"
 
-2. O gato responde:
+[3s - 4s]
+O gato reage imediatamente, olhando para o cachorro.
+
+[4s - 6s]
+O gato responde sem hesitar:
 "${gato}"
 `;
   }
 
   prompt += `
-3. ${
-    risada === "sim"
-      ? "Os dois riem juntos de forma natural e descontraída."
-      : "Eles ficam em silêncio por um instante, clima leve."
+[6s - 8s]
+${
+  risada === "sim"
+    ? "Os dois riem juntos de forma natural e descontraída."
+    : "Eles se encaram por um instante, clima leve."
 }
 `;
 
