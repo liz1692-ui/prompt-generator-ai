@@ -76,16 +76,11 @@ function gerar() {
   let fala2 = quem === "gato" ? cachorro : gato;
 
   let prompt = {
-    scene: "light discussion",
+    scene: "conversa leve entre gato e cachorro em português do Brasil",
     duration: "8s",
-    style: "ultra-realistic cinematic, 8K, leve tom humorístico",
-    camera: "fixed medium shot, leve push-in suave",
-    environment: "estúdio de podcast moderno, iluminação quente, fundo escuro com luz suave",
-
-    voice_consistency: {
-      cat: "male voice only, deep tone, Brazilian Portuguese",
-      dog: "male voice only, natural Brazilian Portuguese"
-    },
+    style: "ultra-realista cinematográfico, humor leve, foco em conversa natural em pt-BR",
+    camera: "plano médio fixo com leve aproximação",
+    environment: "estúdio de podcast moderno, iluminação quente e aconchegante",
 
     characters: [
       {
@@ -98,30 +93,24 @@ function gerar() {
       }
     ],
 
-    lip_sync: "precise articulation, Brazilian Portuguese phonemes",
-
     action_timeline: [
       {
         time: "0s-3s",
         dialogue: {
           character: primeira,
           text: fala1,
-          language: "Português do Brasil",
-          tone: primeira === "dog"
-            ? "natural, conversacional"
-            : "calmo, levemente irônico"
-        }
+          language: "pt-BR"
+        },
+        audio: "voz natural, ritmo de conversa, sotaque brasileiro"
       },
       {
         time: "3s-6s",
         dialogue: {
           character: segunda,
           text: fala2,
-          language: "Português do Brasil",
-          tone: segunda === "dog"
-            ? "natural, conversacional"
-            : "calmo, levemente irônico"
-        }
+          language: "pt-BR"
+        },
+        audio: "voz natural, ritmo de conversa, sotaque brasileiro"
       }
     ]
   };
