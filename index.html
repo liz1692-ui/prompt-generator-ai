@@ -35,7 +35,7 @@
 </head>
 <body>
 
-<h2>🐱🐶 Gerador de Prompt</h2>
+<h2>🐱🐶 Gerador de Prompt PRO</h2>
 
 <label>Fala do Gato:</label>
 <input id="gato">
@@ -61,13 +61,13 @@
 
 <script>
 function gerar() {
-  let gato = document.getElementById("gato").value;
-  let cachorro = document.getElementById("cachorro").value;
+  let gato = document.getElementById("gato").value.trim();
+  let cachorro = document.getElementById("cachorro").value.trim();
   let quem = document.getElementById("quem").value;
   let risada = document.getElementById("risada").value;
 
   // Correção automática BR
-  cachorro = cachorro.replace("Corinthians", "Corintias");
+  cachorro = cachorro.replace(/Corinthians/gi, "Corintias");
 
   let primeira = quem === "gato" ? "cat" : "dog";
   let segunda = quem === "gato" ? "dog" : "cat";
@@ -76,9 +76,11 @@ function gerar() {
   let fala2 = quem === "gato" ? cachorro : gato;
 
   let prompt = {
-    scene: "Podcast automático",
+    scene: "light discussion",
     duration: "8s",
-    style: "ultra-realistic cinematic, natural Brazilian voice",
+    style: "ultra-realistic cinematic, 8K, leve tom humorístico",
+    camera: "fixed medium shot, leve push-in suave",
+    environment: "estúdio de podcast moderno, iluminação quente, fundo escuro com luz suave",
 
     voice_consistency: {
       cat: "male voice only, deep tone, Brazilian Portuguese",
@@ -86,8 +88,14 @@ function gerar() {
     },
 
     characters: [
-      { id: "dog", description: "cachorro caramelo" },
-      { id: "cat", description: "gato cinza" }
+      {
+        id: "dog",
+        description: "cachorro caramelo brasileiro, expressivo, usando headset e microfone, lado esquerdo"
+      },
+      {
+        id: "cat",
+        description: "gato cinza com olhos verdes, expressão curiosa, usando headset e microfone, lado direito"
+      }
     ],
 
     lip_sync: "precise articulation, Brazilian Portuguese phonemes",
@@ -98,15 +106,21 @@ function gerar() {
         dialogue: {
           character: primeira,
           text: fala1,
-          language: "Português do Brasil"
+          language: "Português do Brasil",
+          tone: primeira === "dog"
+            ? "natural, conversacional"
+            : "calmo, levemente irônico"
         }
       },
       {
-        time: "3s-5s",
+        time: "3s-6s",
         dialogue: {
           character: segunda,
           text: fala2,
-          language: "Português do Brasil"
+          language: "Português do Brasil",
+          tone: segunda === "dog"
+            ? "natural, conversacional"
+            : "calmo, levemente irônico"
         }
       }
     ]
@@ -114,9 +128,9 @@ function gerar() {
 
   if (risada === "sim") {
     prompt.action_timeline.push({
-      time: "5s-8s",
+      time: "6s-8s",
       action: "personagem começa a rir e entra em gargalhada",
-      audio: "risada natural, crescente"
+      audio: "risada masculina natural, crescente, não robótica"
     });
   }
 
