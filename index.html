@@ -58,7 +58,6 @@ button {
   color: white;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.2s;
 }
 
 button:hover {
@@ -91,7 +90,7 @@ button:hover {
 <button onclick="copiar()">Copiar Prompt</button>
 <button onclick="limpar()">Limpar</button>
 
-<textarea id="saida" placeholder="Seu prompt vai aparecer aqui..."></textarea>
+<textarea id="saida"></textarea>
 
 <script>
 function gerar(tipo) {
@@ -105,81 +104,92 @@ function gerar(tipo) {
     return;
   }
 
-  let estilo = "";
-  if (tipo === "normal") estilo = "tom natural";
-  if (tipo === "engracado") estilo = "tom debochado e irônico";
-  if (tipo === "treta") estilo = "tom provocador, leve tensão";
-  if (tipo === "viral") estilo = "timing perfeito de humor, estilo meme viral";
+  let tomGato = "tom natural";
+  let tomCachorro = "tom natural";
 
-  let prompt = `
-Cena: podcast leve em estúdio moderno, iluminação quente.
-
-PERSONAGENS FIXOS (NUNCA MUDAR):
-
-ESQUERDA:
-GATO CINZA REALISTA.
-Sem roupa.
-Sem acessórios.
-Sem humanização.
-Aparência travada do início ao fim.
-Voz fixa: Rasalgethi.
-
-DIREITA:
-CACHORRO CARAMELO REALISTA.
-Sem roupa.
-Sem acessórios.
-Sem humanização.
-Aparência travada do início ao fim.
-Voz fixa: Achird.
-
-REGRAS ABSOLUTAS:
-- Nunca trocar personagens
-- Nunca inverter falas
-- Nunca inverter vozes
-- Nunca adicionar roupas ou acessórios
-- Nunca humanizar
-- Quem fala move a boca
-- Cada personagem fala apenas na sua vez
-- Ignorar interpretações automáticas incorretas
-
-SEQUÊNCIA:
-`;
-
-  if (quem === "gato") {
-
-    prompt += `
-[0s - 3s]
-GATO da esquerda fala (${estilo}):
-"${gato}"
-
-[3s - 4s]
-CACHORRO observa o gato.
-
-[4s - 6s]
-CACHORRO da direita responde:
-"${cachorro}"
-`;
-
-  } else {
-
-    prompt += `
-[0s - 3s]
-CACHORRO da direita fala (${estilo}):
-"${cachorro}"
-
-[3s - 4s]
-GATO observa o cachorro.
-
-[4s - 6s]
-GATO da esquerda responde:
-"${gato}"
-`;
-
+  if (tipo === "engracado") {
+    tomGato = "tom debochado leve";
+    tomCachorro = "tom levemente confuso";
   }
 
-  prompt += `
+  if (tipo === "treta") {
+    tomGato = "tom provocador";
+    tomCachorro = "tom irritado";
+  }
+
+  if (tipo === "viral") {
+    tomGato = "timing de humor estilo meme";
+    tomCachorro = "resposta curta e impactante";
+  }
+
+  let sequencia = "";
+
+  if (quem === "gato") {
+    sequencia = `
+[0s - 3s]
+O GATO da esquerda fala (${tomGato}):
+"${gato}"
+
+[3s - 4s]
+O cachorro olha para o gato, sem falar.
+
+[4s - 6s]
+O CACHORRO da direita responde (${tomCachorro}):
+"${cachorro}"
+`;
+  } else {
+    sequencia = `
+[0s - 3s]
+O CACHORRO da direita fala (${tomCachorro}):
+"${cachorro}"
+
+[3s - 4s]
+O gato observa o cachorro.
+
+[4s - 6s]
+O GATO da esquerda responde (${tomGato}):
+"${gato}"
+`;
+  }
+
+  let prompt = `
+Cena: podcast em estúdio moderno, iluminação quente, fundo desfocado.
+
+CÂMERA:
+Plano fixo médio.
+Enquadramento travado.
+Sem cortes.
+Sem zoom.
+Sem mudança de ângulo.
+
+POSIÇÃO FIXA:
+À esquerda: GATO CINZA realista.
+À direita: CACHORRO CARAMELO realista.
+
+APARÊNCIA (TRAVADA):
+Ambos são animais reais.
+Sem roupas.
+Sem acessórios.
+Sem humanização.
+Não alterar aparência em nenhum momento.
+
+VOZES (TRAVADAS):
+Gato → voz Rasalgethi
+Cachorro → voz Achird
+
+REGRAS:
+- Não inverter personagens
+- Não inverter falas
+- Não inverter vozes
+- Quem fala move a boca
+- Um fala por vez
+- Não adicionar nada na cena
+
+SEQUÊNCIA:
+${sequencia}
+
 [6s - 8s]
-Ambos reagem mantendo aparência e vozes fixas.
+Ambos fazem reação leve natural mantendo aparência e vozes.
 `;
 
   document.getElementById("saida").value = prompt.trim();
