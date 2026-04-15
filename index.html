@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gerador JSON VEO3</title>
 
 <style>
@@ -36,18 +37,51 @@ h2 {
   letter-spacing: 1px;
 }
 
-input, select {
+.campo-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #94a3b8;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.contador {
+  font-size: 11px;
+  color: #475569;
+  transition: color 0.2s;
+}
+
+textarea.entrada {
+  width: 100%;
+  height: 72px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #1e293b;
+  color: white;
+  font-size: 14px;
+  font-family: Arial;
+  border: 1px solid transparent;
+  resize: none;
+  transition: border 0.15s;
+}
+
+textarea.entrada:focus {
+  outline: none;
+  border-color: #334155;
+}
+
+select {
   width: 100%;
   padding: 12px;
-  margin-top: 8px;
+  margin-top: 12px;
   border-radius: 10px;
   border: none;
   background: #1e293b;
   color: white;
   font-size: 14px;
 }
-
-input:first-child { margin-top: 0; }
 
 .btn-group {
   display: flex;
@@ -57,9 +91,8 @@ input:first-child { margin-top: 0; }
 
 button {
   flex: 1;
-  min-width: 100px;
+  min-width: 80px;
   padding: 12px;
-  margin-top: 0;
   border-radius: 10px;
   border: 2px solid transparent;
   font-weight: bold;
@@ -77,16 +110,18 @@ button.ativo {
 
 button:not(.ativo):hover { opacity: 0.9; }
 
-.normal   { background: #3b82f6; }
-.engracado{ background: #f59e0b; color: #000; }
-.treta    { background: #ef4444; }
-.viral    { background: #8b5cf6; }
-.lite     { background: #22c55e; color: #000; }
-.fast     { background: #ef4444; }
-.copiar   { background: #1e293b; }
-.limpar   { background: #334155; }
+.normal    { background: #3b82f6; }
+.engracado { background: #f59e0b; color: #000; }
+.treta     { background: #ef4444; }
+.viral     { background: #8b5cf6; }
+.dur       { background: #0e7490; }
+.lite      { background: #22c55e; color: #000; }
+.fast      { background: #ef4444; }
+.copiar    { background: #1e293b; }
+.download  { background: #0e7490; }
+.limpar    { background: #334155; }
 
-textarea {
+textarea#saida {
   width: 100%;
   height: 480px;
   margin-top: 14px;
@@ -116,9 +151,20 @@ textarea {
 
 <div class="box">
   <h3>Falas</h3>
-  <input id="gato"     placeholder="Fala do gato (voz Rasalgethi)">
-  <input id="cachorro" placeholder="Fala do cachorro (voz Achird)">
-  <select id="quem" style="margin-top:8px">
+
+  <label class="campo-label">
+    Gato (voz Rasalgethi)
+    <span id="count-gato" class="contador">0 / 200</span>
+  </label>
+  <textarea class="entrada" id="gato" maxlength="200" placeholder="Digite a fala do gato..."></textarea>
+
+  <label class="campo-label">
+    Cachorro (voz Achird)
+    <span id="count-cachorro" class="contador">0 / 200</span>
+  </label>
+  <textarea class="entrada" id="cachorro" maxlength="200" placeholder="Digite a fala do cachorro..."></textarea>
+
+  <select id="quem">
     <option value="gato">Gato começa</option>
     <option value="cachorro">Cachorro começa</option>
   </select>
@@ -126,11 +172,20 @@ textarea {
 
 <div class="box">
   <h3>Estilo</h3>
-  <div class="btn-group">
-    <button class="normal ativo"    onclick="setEstilo('normal',    this)">Normal</button>
-    <button class="engracado"       onclick="setEstilo('engracado', this)">Engraçado</button>
-    <button class="treta"           onclick="setEstilo('treta',     this)">Treta</button>
-    <button class="viral"           onclick="setEstilo('viral',     this)">Viral</button>
+  <div class="btn-group" id="grupo-estilo">
+    <button class="normal ativo"  onclick="setEstilo('normal',    this)">Normal</button>
+    <button class="engracado"     onclick="setEstilo('engracado', this)">Engraçado</button>
+    <button class="treta"         onclick="setEstilo('treta',     this)">Treta</button>
+    <button class="viral"         onclick="setEstilo('viral',     this)">Viral</button>
+  </div>
+</div>
+
+<div class="box">
+  <h3>Duração do Vídeo</h3>
+  <div class="btn-group" id="grupo-duracao">
+    <button class="dur ativo" onclick="setDuracao(8,  this)">8 seg</button>
+    <button class="dur"       onclick="setDuracao(12, this)">12 seg</button>
+    <button class="dur"       onclick="setDuracao(16, this)">16 seg</button>
   </div>
 </div>
 
@@ -144,8 +199,9 @@ textarea {
 
 <div class="box">
   <div class="btn-group">
-    <button class="copiar" onclick="copiar()">Copiar JSON</button>
-    <button class="limpar" onclick="limpar()">Limpar</button>
+    <button class="copiar"   onclick="copiar()">Copiar JSON</button>
+    <button class="download" onclick="baixar()">Baixar JSON</button>
+    <button class="limpar"   onclick="limpar()">Limpar</button>
   </div>
 </div>
 
@@ -154,28 +210,109 @@ textarea {
 
 <script>
 
-let estiloAtual = "normal";
+let estiloAtual  = "normal";
+let duracaoAtual = 8;
 
 const TONS = {
-  normal:    { gato: "calm natural",       cachorro: "calm natural"     },
-  engracado: { gato: "sarcastic mocking",  cachorro: "confused amused"  },
-  treta:     { gato: "provocative bold",   cachorro: "irritated tense"  },
-  viral:     { gato: "meme humor absurd",  cachorro: "shocking impactful"}
+  normal:    { gato: "calm natural",       cachorro: "calm natural"       },
+  engracado: { gato: "sarcastic mocking",  cachorro: "confused amused"    },
+  treta:     { gato: "provocative bold",   cachorro: "irritated tense"    },
+  viral:     { gato: "meme humor absurd",  cachorro: "shocking impactful" }
 };
+
+// --- Contadores de caracteres ---
+
+function setupContador(idCampo, idContador) {
+  const campo = document.getElementById(idCampo);
+  const cont  = document.getElementById(idContador);
+  const max   = parseInt(campo.getAttribute("maxlength"), 10);
+  campo.addEventListener("input", () => {
+    const len = campo.value.length;
+    cont.textContent = `${len} / ${max}`;
+    cont.style.color = len > max * 0.9 ? "#f87171" : "#475569";
+    salvarStorage();
+  });
+}
+
+setupContador("gato",     "count-gato");
+setupContador("cachorro", "count-cachorro");
+
+// --- Estado: estilo ---
 
 function setEstilo(estilo, btn) {
   estiloAtual = estilo;
-  document.querySelectorAll(".btn-group button").forEach(b => {
-    if (b.classList.contains("normal") || b.classList.contains("engracado") ||
-        b.classList.contains("treta")  || b.classList.contains("viral")) {
-      b.classList.remove("ativo");
-    }
-  });
+  document.querySelectorAll("#grupo-estilo button").forEach(b => b.classList.remove("ativo"));
   btn.classList.add("ativo");
+  salvarStorage();
 }
 
-function gerar(modelo) {
+// --- Estado: duração ---
 
+function setDuracao(dur, btn) {
+  duracaoAtual = dur;
+  document.querySelectorAll("#grupo-duracao button").forEach(b => b.classList.remove("ativo"));
+  btn.classList.add("ativo");
+  salvarStorage();
+}
+
+// --- localStorage ---
+
+function salvarStorage() {
+  localStorage.setItem("veo3_gato",     document.getElementById("gato").value);
+  localStorage.setItem("veo3_cachorro", document.getElementById("cachorro").value);
+  localStorage.setItem("veo3_quem",     document.getElementById("quem").value);
+  localStorage.setItem("veo3_estilo",   estiloAtual);
+  localStorage.setItem("veo3_duracao",  duracaoAtual);
+}
+
+function restaurarStorage() {
+  const gato     = localStorage.getItem("veo3_gato");
+  const cachorro = localStorage.getItem("veo3_cachorro");
+  const quem     = localStorage.getItem("veo3_quem");
+  const estilo   = localStorage.getItem("veo3_estilo");
+  const duracao  = localStorage.getItem("veo3_duracao");
+
+  if (gato) {
+    document.getElementById("gato").value = gato;
+    document.getElementById("count-gato").textContent = `${gato.length} / 200`;
+  }
+  if (cachorro) {
+    document.getElementById("cachorro").value = cachorro;
+    document.getElementById("count-cachorro").textContent = `${cachorro.length} / 200`;
+  }
+  if (quem) {
+    document.getElementById("quem").value = quem;
+  }
+  if (estilo) {
+    estiloAtual = estilo;
+    document.querySelectorAll("#grupo-estilo button").forEach(b => {
+      b.classList.toggle("ativo", [...b.classList].includes(estilo));
+    });
+  }
+  if (duracao) {
+    duracaoAtual = parseInt(duracao, 10);
+    document.querySelectorAll("#grupo-duracao button").forEach(b => {
+      b.classList.toggle("ativo", b.textContent.startsWith(duracao));
+    });
+  }
+}
+
+restaurarStorage();
+
+document.getElementById("quem").addEventListener("change", salvarStorage);
+
+// --- Timestamps proporcionais à duração ---
+
+function calcTimestamps(dur) {
+  const t1 = Math.round(dur * 0.375);
+  const t2 = Math.round(dur * 0.5);
+  const t3 = Math.round(dur * 0.75);
+  return [0, t1, t2, t3, dur];
+}
+
+// --- Geração do JSON ---
+
+function gerar(modelo) {
   const gato     = document.getElementById("gato").value.trim();
   const cachorro = document.getElementById("cachorro").value.trim();
   const quem     = document.getElementById("quem").value;
@@ -186,10 +323,11 @@ function gerar(modelo) {
   }
 
   const tom = TONS[estiloAtual];
+  const [t0, t1, t2, t3, t4] = calcTimestamps(duracaoAtual);
 
   const seq = quem === "gato"
-    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro)
-    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato);
+    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro, t0, t1, t2, t3, t4)
+    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato, t0, t1, t2, t3, t4);
 
   const json = {
     veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
@@ -207,7 +345,7 @@ function gerar(modelo) {
       zoom: false,
       pan: false,
       movement: false,
-      duration_seconds: 8
+      duration_seconds: duracaoAtual
     },
     characters: [
       {
@@ -250,8 +388,7 @@ function gerar(modelo) {
   document.getElementById("status").textContent = "JSON gerado. Pronto para copiar.";
 }
 
-function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
-
+function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, t0, t1, t2, t3, t4) {
   const voiceFirst  = first === "cat" ? "Rasalgethi" : "Achird";
   const voiceSecond = second === "cat" ? "Rasalgethi" : "Achird";
   const posFirst    = first === "cat" ? "LEFT" : "RIGHT";
@@ -261,7 +398,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
 
   return [
     {
-      timestamp: "0s-3s",
+      timestamp: `${t0}s-${t1}s`,
       character: labelFirst,
       position: posFirst,
       voice: voiceFirst,
@@ -272,7 +409,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
       other_character: "watches silently, no mouth movement"
     },
     {
-      timestamp: "3s-4s",
+      timestamp: `${t1}s-${t2}s`,
       character: labelSecond,
       position: posSecond,
       action: "watches_silently",
@@ -280,7 +417,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
       expression: "listening attentive"
     },
     {
-      timestamp: "4s-6s",
+      timestamp: `${t2}s-${t3}s`,
       character: labelSecond,
       position: posSecond,
       voice: voiceSecond,
@@ -291,7 +428,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
       other_character: "watches silently, no mouth movement"
     },
     {
-      timestamp: "6s-8s",
+      timestamp: `${t3}s-${t4}s`,
       action: "both_react_naturally",
       characters: [labelFirst, labelSecond],
       movement: "subtle natural reaction",
@@ -300,21 +437,54 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
   ];
 }
 
-function copiar() {
+// --- Copiar ---
+
+async function copiar() {
   const ta = document.getElementById("saida");
   if (!ta.value) { alert("Gere o prompt primeiro!"); return; }
-  ta.select();
-  document.execCommand("copy");
+
+  try {
+    await navigator.clipboard.writeText(ta.value);
+  } catch {
+    ta.select();
+    document.execCommand("copy");
+  }
+
   const s = document.getElementById("status");
   s.textContent = "Copiado!";
   setTimeout(() => { s.textContent = ""; }, 2000);
 }
 
+// --- Baixar JSON ---
+
+function baixar() {
+  const ta = document.getElementById("saida");
+  if (!ta.value) { alert("Gere o prompt primeiro!"); return; }
+
+  const blob = new Blob([ta.value], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `veo3-prompt-${estiloAtual}-${duracaoAtual}s.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  const s = document.getElementById("status");
+  s.textContent = "Arquivo baixado!";
+  setTimeout(() => { s.textContent = ""; }, 2000);
+}
+
+// --- Limpar ---
+
 function limpar() {
-  document.getElementById("gato").value = "";
+  document.getElementById("gato").value     = "";
   document.getElementById("cachorro").value = "";
-  document.getElementById("saida").value = "";
-  document.getElementById("status").textContent = "";
+  document.getElementById("saida").value    = "";
+  document.getElementById("status").textContent      = "";
+  document.getElementById("count-gato").textContent     = "0 / 200";
+  document.getElementById("count-cachorro").textContent = "0 / 200";
+  localStorage.removeItem("veo3_gato");
+  localStorage.removeItem("veo3_cachorro");
 }
 
 </script>
