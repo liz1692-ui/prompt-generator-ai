@@ -89,6 +89,10 @@ select {
   flex-wrap: wrap;
 }
 
+.btn-group + .btn-group {
+  margin-top: 8px;
+}
+
 button {
   flex: 1;
   min-width: 80px;
@@ -114,12 +118,40 @@ button:not(.ativo):hover { opacity: 0.9; }
 .engracado { background: #f59e0b; color: #000; }
 .treta     { background: #ef4444; }
 .viral     { background: #8b5cf6; }
-.dur       { background: #0e7490; }
+.ext       { background: #0e7490; }
+.btn-livre { background: #7c3aed; }
 .lite      { background: #22c55e; color: #000; }
 .fast      { background: #ef4444; }
+.gerar-json{ background: #1d4ed8; }
+.gerar-txt { background: #7c3aed; }
 .copiar    { background: #1e293b; }
 .download  { background: #0e7490; }
 .limpar    { background: #334155; }
+
+.custom-dur {
+  display: none;
+  margin-top: 10px;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-dur.visivel { display: flex; }
+
+.custom-dur input[type="number"] {
+  width: 90px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: #1e293b;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+}
+
+.custom-dur span {
+  font-size: 12px;
+  color: #64748b;
+}
 
 textarea#saida {
   width: 100%;
@@ -149,6 +181,7 @@ textarea#saida {
 
 <h2>Gerador JSON VEO3 — Podcast</h2>
 
+<!-- FALAS -->
 <div class="box">
   <h3>Falas</h3>
 
@@ -170,6 +203,7 @@ textarea#saida {
   </select>
 </div>
 
+<!-- ESTILO -->
 <div class="box">
   <h3>Estilo</h3>
   <div class="btn-group" id="grupo-estilo">
@@ -180,38 +214,51 @@ textarea#saida {
   </div>
 </div>
 
+<!-- EXTENSÃO DE CENA -->
 <div class="box">
-  <h3>Duração do Vídeo</h3>
-  <div class="btn-group" id="grupo-duracao">
-    <button class="dur ativo" onclick="setDuracao(8,  this)">8 seg</button>
-    <button class="dur"       onclick="setDuracao(12, this)">12 seg</button>
-    <button class="dur"       onclick="setDuracao(16, this)">16 seg</button>
+  <h3>Extensão de Cena</h3>
+  <div class="btn-group" id="grupo-extensao">
+    <button class="ext ativo"  onclick="setExtensao(8,      this)">8 seg</button>
+    <button class="ext"        onclick="setExtensao(16,     this)">16 seg</button>
+    <button class="ext"        onclick="setExtensao(24,     this)">24 seg</button>
+    <button class="btn-livre"  onclick="setExtensao('livre',this)">Livre</button>
+  </div>
+  <div class="custom-dur" id="custom-dur">
+    <input type="number" id="custom-secs" min="8" max="120" step="8" value="32">
+    <span>segundos (múltiplos de 8 recomendado)</span>
   </div>
 </div>
 
+<!-- MODELO VEO -->
 <div class="box">
   <h3>Modelo VEO</h3>
-  <div class="btn-group">
-    <button class="lite" onclick="gerar('lite')">VEO LITE</button>
-    <button class="fast" onclick="gerar('fast')">VEO FAST</button>
+  <div class="btn-group" id="grupo-modelo">
+    <button class="lite ativo" onclick="setModelo('lite', this)">VEO LITE</button>
+    <button class="fast"       onclick="setModelo('fast', this)">VEO FAST</button>
   </div>
 </div>
 
+<!-- AÇÕES -->
 <div class="box">
   <div class="btn-group">
-    <button class="copiar"   onclick="copiar()">Copiar JSON</button>
-    <button class="download" onclick="baixar()">Baixar JSON</button>
+    <button class="gerar-json" onclick="gerar()">Gerar JSON</button>
+    <button class="gerar-txt"  onclick="gerarTextoLivre()">Gerar Texto Livre</button>
+  </div>
+  <div class="btn-group">
+    <button class="copiar"   onclick="copiar()">Copiar</button>
+    <button class="download" onclick="baixar()">Baixar</button>
     <button class="limpar"   onclick="limpar()">Limpar</button>
   </div>
 </div>
 
-<textarea id="saida" readonly placeholder="O prompt JSON aparecerá aqui..."></textarea>
+<textarea id="saida" readonly placeholder="O prompt aparecerá aqui..."></textarea>
 <div id="status"></div>
 
 <script>
 
-let estiloAtual  = "normal";
-let duracaoAtual = 8;
+let estiloAtual   = "normal";
+let extensaoAtual = 8;
+let modeloAtual   = "lite";
 
 const TONS = {
   normal:    { gato: "calm natural",       cachorro: "calm natural"       },
@@ -220,7 +267,7 @@ const TONS = {
   viral:     { gato: "meme humor absurd",  cachorro: "shocking impactful" }
 };
 
-// --- Contadores de caracteres ---
+// ── Contadores de caracteres ──────────────────────────────────────────────────
 
 function setupContador(idCampo, idContador) {
   const campo = document.getElementById(idCampo);
@@ -237,7 +284,7 @@ function setupContador(idCampo, idContador) {
 setupContador("gato",     "count-gato");
 setupContador("cachorro", "count-cachorro");
 
-// --- Estado: estilo ---
+// ── Estado ────────────────────────────────────────────────────────────────────
 
 function setEstilo(estilo, btn) {
   estiloAtual = estilo;
@@ -246,23 +293,30 @@ function setEstilo(estilo, btn) {
   salvarStorage();
 }
 
-// --- Estado: duração ---
+function setExtensao(dur, btn) {
+  extensaoAtual = dur;
+  document.querySelectorAll("#grupo-extensao button").forEach(b => b.classList.remove("ativo"));
+  btn.classList.add("ativo");
+  document.getElementById("custom-dur").classList.toggle("visivel", dur === "livre");
+  salvarStorage();
+}
 
-function setDuracao(dur, btn) {
-  duracaoAtual = dur;
-  document.querySelectorAll("#grupo-duracao button").forEach(b => b.classList.remove("ativo"));
+function setModelo(modelo, btn) {
+  modeloAtual = modelo;
+  document.querySelectorAll("#grupo-modelo button").forEach(b => b.classList.remove("ativo"));
   btn.classList.add("ativo");
   salvarStorage();
 }
 
-// --- localStorage ---
+// ── localStorage ──────────────────────────────────────────────────────────────
 
 function salvarStorage() {
   localStorage.setItem("veo3_gato",     document.getElementById("gato").value);
   localStorage.setItem("veo3_cachorro", document.getElementById("cachorro").value);
   localStorage.setItem("veo3_quem",     document.getElementById("quem").value);
   localStorage.setItem("veo3_estilo",   estiloAtual);
-  localStorage.setItem("veo3_duracao",  duracaoAtual);
+  localStorage.setItem("veo3_extensao", extensaoAtual);
+  localStorage.setItem("veo3_modelo",   modeloAtual);
 }
 
 function restaurarStorage() {
@@ -270,7 +324,8 @@ function restaurarStorage() {
   const cachorro = localStorage.getItem("veo3_cachorro");
   const quem     = localStorage.getItem("veo3_quem");
   const estilo   = localStorage.getItem("veo3_estilo");
-  const duracao  = localStorage.getItem("veo3_duracao");
+  const extensao = localStorage.getItem("veo3_extensao");
+  const modelo   = localStorage.getItem("veo3_modelo");
 
   if (gato) {
     document.getElementById("gato").value = gato;
@@ -280,58 +335,140 @@ function restaurarStorage() {
     document.getElementById("cachorro").value = cachorro;
     document.getElementById("count-cachorro").textContent = `${cachorro.length} / 200`;
   }
-  if (quem) {
-    document.getElementById("quem").value = quem;
-  }
+  if (quem) document.getElementById("quem").value = quem;
+
   if (estilo) {
     estiloAtual = estilo;
-    document.querySelectorAll("#grupo-estilo button").forEach(b => {
-      b.classList.toggle("ativo", [...b.classList].includes(estilo));
-    });
+    document.querySelectorAll("#grupo-estilo button").forEach(b =>
+      b.classList.toggle("ativo", [...b.classList].includes(estilo))
+    );
   }
-  if (duracao) {
-    duracaoAtual = parseInt(duracao, 10);
-    document.querySelectorAll("#grupo-duracao button").forEach(b => {
-      b.classList.toggle("ativo", b.textContent.startsWith(duracao));
+
+  if (extensao) {
+    extensaoAtual = extensao === "livre" ? "livre" : parseInt(extensao, 10);
+    document.querySelectorAll("#grupo-extensao button").forEach(b => {
+      const match = extensao === "livre"
+        ? b.classList.contains("btn-livre")
+        : b.textContent.startsWith(extensao);
+      b.classList.toggle("ativo", match);
     });
+    if (extensao === "livre") document.getElementById("custom-dur").classList.add("visivel");
+  }
+
+  if (modelo) {
+    modeloAtual = modelo;
+    document.querySelectorAll("#grupo-modelo button").forEach(b =>
+      b.classList.toggle("ativo", b.classList.contains(modelo))
+    );
   }
 }
 
 restaurarStorage();
-
 document.getElementById("quem").addEventListener("change", salvarStorage);
 
-// --- Timestamps proporcionais à duração ---
+// ── Duração total ─────────────────────────────────────────────────────────────
 
-function calcTimestamps(dur) {
-  const t1 = Math.round(dur * 0.375);
-  const t2 = Math.round(dur * 0.5);
-  const t3 = Math.round(dur * 0.75);
-  return [0, t1, t2, t3, dur];
+function getTotalSecs() {
+  if (extensaoAtual === "livre") {
+    return Math.max(8, parseInt(document.getElementById("custom-secs").value) || 8);
+  }
+  return extensaoAtual;
 }
 
-// --- Geração do JSON ---
+// ── Helpers de personagem ─────────────────────────────────────────────────────
 
-function gerar(modelo) {
-  const gato     = document.getElementById("gato").value.trim();
-  const cachorro = document.getElementById("cachorro").value.trim();
-  const quem     = document.getElementById("quem").value;
+function resolvePersonagens(quem) {
+  const first  = quem === "gato" ? "cat" : "dog";
+  const second = first === "cat" ? "dog" : "cat";
+  return {
+    first, second,
+    voiceFirst:  first === "cat" ? "Rasalgethi" : "Achird",
+    voiceSecond: second === "cat" ? "Rasalgethi" : "Achird",
+    posFirst:    first === "cat" ? "LEFT"  : "RIGHT",
+    posSecond:   second === "cat" ? "LEFT" : "RIGHT",
+    labelFirst:  first === "cat" ? "character_LEFT"  : "character_RIGHT",
+    labelSecond: second === "cat" ? "character_LEFT" : "character_RIGHT"
+  };
+}
 
-  if (!gato || !cachorro) {
-    alert("Preencha as falas do gato e do cachorro!");
-    return;
+// ── Gerar JSON ────────────────────────────────────────────────────────────────
+
+function gerar() {
+  const gatoVal     = document.getElementById("gato").value.trim();
+  const cachorroVal = document.getElementById("cachorro").value.trim();
+  const quem        = document.getElementById("quem").value;
+
+  if (!gatoVal || !cachorroVal) { alert("Preencha as falas do gato e do cachorro!"); return; }
+
+  const tom       = TONS[estiloAtual];
+  const totalSecs = getTotalSecs();
+  const numBlocks = Math.max(1, Math.ceil(totalSecs / 8));
+  const p         = resolvePersonagens(quem);
+
+  const firstLine  = quem === "gato" ? gatoVal     : cachorroVal;
+  const secondLine = quem === "gato" ? cachorroVal : gatoVal;
+  const firstTone  = quem === "gato" ? tom.gato    : tom.cachorro;
+  const secondTone = quem === "gato" ? tom.cachorro : tom.gato;
+
+  // Bloco 1: diálogo principal — sequência contínua, sem bloco de "assistindo"
+  const block1Seq = [
+    {
+      timestamp: "0s-3.5s",
+      character: p.labelFirst,
+      position: p.posFirst,
+      voice: p.voiceFirst,
+      action: "speaks",
+      tone: firstTone,
+      line: firstLine,
+      lip_sync: true,
+      other_character: "watches silently, no mouth movement"
+    },
+    {
+      timestamp: "3.5s-7s",
+      character: p.labelSecond,
+      position: p.posSecond,
+      voice: p.voiceSecond,
+      action: "speaks",
+      tone: secondTone,
+      line: secondLine,
+      lip_sync: true,
+      other_character: "watches silently, no mouth movement"
+    },
+    {
+      timestamp: "7s-8s",
+      action: "both_react_naturally",
+      characters: [p.labelFirst, p.labelSecond],
+      movement: "subtle natural reaction",
+      lip_sync: false
+    }
+  ];
+
+  const blocks = [{ block: 1, timestamp: "0s-8s", sequence: block1Seq }];
+
+  // Blocos extras: extensão contínua
+  for (let i = 2; i <= numBlocks; i++) {
+    const s = (i - 1) * 8;
+    const e = i * 8;
+    blocks.push({
+      block: i,
+      timestamp: `${s}s-${e}s`,
+      continuity: "seamless_extension",
+      sequence: [
+        {
+          timestamp: `${s}s-${e}s`,
+          action: "extend_scene_naturally",
+          characters: [p.labelFirst, p.labelSecond],
+          instruction: "continue dialogue naturally from previous block — same scene, same characters, no reset, maintain lip-sync rules"
+        }
+      ]
+    });
   }
 
-  const tom = TONS[estiloAtual];
-  const [t0, t1, t2, t3, t4] = calcTimestamps(duracaoAtual);
-
-  const seq = quem === "gato"
-    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro, t0, t1, t2, t3, t4)
-    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato, t0, t1, t2, t3, t4);
-
   const json = {
-    veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
+    veo_model: modeloAtual === "lite" ? "VEO_LITE" : "VEO_FAST",
     style: estiloAtual,
+    total_duration_seconds: totalSecs,
+    total_blocks: numBlocks,
     scene: {
       type: "podcast_studio",
       lighting: "warm cinematic amber",
@@ -344,8 +481,7 @@ function gerar(modelo) {
       cuts: false,
       zoom: false,
       pan: false,
-      movement: false,
-      duration_seconds: duracaoAtual
+      movement: false
     },
     characters: [
       {
@@ -371,6 +507,12 @@ function gerar(modelo) {
         appearance_locked: true
       }
     ],
+    dialogue_control: {
+      first_speaker: p.labelFirst,
+      strict_order: true,
+      enforce_timeline: true,
+      interruptions: false
+    },
     rules: {
       swap_characters: false,
       swap_dialogue: false,
@@ -381,106 +523,135 @@ function gerar(modelo) {
       modify_appearance: false,
       modify_set: false
     },
-    sequence: seq
+    continuity_rules: {
+      scene_continuity: true,
+      character_memory: true,
+      voice_consistency: true,
+      no_reset_between_blocks: true
+    },
+    blocks: blocks
   };
 
   document.getElementById("saida").value = JSON.stringify(json, null, 2);
-  document.getElementById("status").textContent = "JSON gerado. Pronto para copiar.";
+  document.getElementById("status").textContent =
+    `JSON gerado — ${numBlocks} bloco(s) × 8s = ${totalSecs}s total.`;
 }
 
-function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, t0, t1, t2, t3, t4) {
-  const voiceFirst  = first === "cat" ? "Rasalgethi" : "Achird";
-  const voiceSecond = second === "cat" ? "Rasalgethi" : "Achird";
-  const posFirst    = first === "cat" ? "LEFT" : "RIGHT";
-  const posSecond   = second === "cat" ? "LEFT" : "RIGHT";
-  const labelFirst  = first === "cat" ? "character_LEFT" : "character_RIGHT";
-  const labelSecond = second === "cat" ? "character_LEFT" : "character_RIGHT";
+// ── Gerar Texto Livre ─────────────────────────────────────────────────────────
 
-  return [
-    {
-      timestamp: `${t0}s-${t1}s`,
-      character: labelFirst,
-      position: posFirst,
-      voice: voiceFirst,
-      action: "speaks",
-      tone: firstTone,
-      line: firstLine,
-      lip_sync: true,
-      other_character: "watches silently, no mouth movement"
-    },
-    {
-      timestamp: `${t1}s-${t2}s`,
-      character: labelSecond,
-      position: posSecond,
-      action: "watches_silently",
-      lip_sync: false,
-      expression: "listening attentive"
-    },
-    {
-      timestamp: `${t2}s-${t3}s`,
-      character: labelSecond,
-      position: posSecond,
-      voice: voiceSecond,
-      action: "speaks",
-      tone: secondTone,
-      line: secondLine,
-      lip_sync: true,
-      other_character: "watches silently, no mouth movement"
-    },
-    {
-      timestamp: `${t3}s-${t4}s`,
-      action: "both_react_naturally",
-      characters: [labelFirst, labelSecond],
-      movement: "subtle natural reaction",
-      lip_sync: false
+function gerarTextoLivre() {
+  const gatoVal     = document.getElementById("gato").value.trim();
+  const cachorroVal = document.getElementById("cachorro").value.trim();
+  const quem        = document.getElementById("quem").value;
+
+  if (!gatoVal || !cachorroVal) { alert("Preencha as falas do gato e do cachorro!"); return; }
+
+  const tom       = TONS[estiloAtual];
+  const totalSecs = getTotalSecs();
+  const numBlocks = Math.max(1, Math.ceil(totalSecs / 8));
+  const p         = resolvePersonagens(quem);
+
+  const nomePrimeiro  = quem === "gato" ? "Gato (Rasalgethi, esquerda)" : "Cachorro (Achird, direita)";
+  const nomeSegundo   = quem === "gato" ? "Cachorro (Achird, direita)"  : "Gato (Rasalgethi, esquerda)";
+  const primeiraFala  = quem === "gato" ? gatoVal     : cachorroVal;
+  const segundaFala   = quem === "gato" ? cachorroVal : gatoVal;
+  const primeiroTom   = quem === "gato" ? tom.gato    : tom.cachorro;
+  const segundoTom    = quem === "gato" ? tom.cachorro : tom.gato;
+  const estiloLabel   = { normal: "Normal", engracado: "Engraçado", treta: "Treta", viral: "Viral" }[estiloAtual];
+
+  let blocosExtra = "";
+  if (numBlocks > 1) {
+    const linhas = [];
+    for (let i = 2; i <= numBlocks; i++) {
+      const s = (i - 1) * 8, e = i * 8;
+      linhas.push(`  Bloco ${i} [${s}s–${e}s]: continue naturalmente — mesma cena, mesmos personagens, sem reiniciar.`);
     }
-  ];
+    blocosExtra = "\n\nBLOCOS DE EXTENSÃO:\n" + linhas.join("\n");
+  }
+
+  const texto =
+`Crie um vídeo de podcast fotorrealista com duração total de ${totalSecs} segundos.
+
+CENÁRIO: Estúdio de podcast. Iluminação âmbar cinematográfica. Fundo escuro desfocado (bokeh). Mesa com dois microfones e duas canecas pretas de podcast.
+
+PERSONAGENS:
+- À esquerda: gato cinza fotorrealista. Anatomia animal real, sentado ereto. Voz: Rasalgethi.
+- À direita: cachorro caramelo fotorrealista. Anatomia animal real, sentado ereto. Voz: Achird.
+
+CÂMERA: Plano médio fixo. Sem cortes, zoom ou movimentos de câmera. Realismo fotográfico.
+
+ESTILO: ${estiloLabel}
+
+DIÁLOGO — Bloco 1 [0s–8s]:
+[0s–3.5s]  ${nomePrimeiro} fala (${primeiroTom}):
+           "${primeiraFala}"
+
+[3.5s–7s]  ${nomeSegundo} responde (${segundoTom}):
+           "${segundaFala}"
+
+[7s–8s]    Ambos reagem naturalmente. Sem fala. Lip-sync desativado.${blocosExtra}
+
+CONTROLE DE DIÁLOGO:
+- Primeiro a falar: ${p.labelFirst}. Ordem estrita, sem interrupções.
+- Lip-sync ativado apenas para quem está falando. O outro mantém boca fechada.
+
+REGRAS OBRIGATÓRIAS:
+- Gato sempre usa voz Rasalgethi. Cachorro sempre usa voz Achird.
+- Sem inversão de personagens, vozes ou posições.
+- Aparência travada: gato sempre cinza, cachorro sempre caramelo.
+- Sem elementos extras ou modificações de cena.
+- Continuidade perfeita entre blocos: mesma cena, sem reset.`;
+
+  document.getElementById("saida").value = texto;
+  document.getElementById("status").textContent =
+    `Texto livre gerado — ${numBlocks} bloco(s) × 8s = ${totalSecs}s total.`;
 }
 
-// --- Copiar ---
+// ── Copiar ────────────────────────────────────────────────────────────────────
 
 async function copiar() {
   const ta = document.getElementById("saida");
   if (!ta.value) { alert("Gere o prompt primeiro!"); return; }
-
   try {
     await navigator.clipboard.writeText(ta.value);
   } catch {
     ta.select();
     document.execCommand("copy");
   }
-
   const s = document.getElementById("status");
   s.textContent = "Copiado!";
   setTimeout(() => { s.textContent = ""; }, 2000);
 }
 
-// --- Baixar JSON ---
+// ── Baixar ────────────────────────────────────────────────────────────────────
 
 function baixar() {
   const ta = document.getElementById("saida");
   if (!ta.value) { alert("Gere o prompt primeiro!"); return; }
 
-  const blob = new Blob([ta.value], { type: "application/json" });
+  const isJson = ta.value.trimStart().startsWith("{");
+  const ext    = isJson ? "json" : "txt";
+  const type   = isJson ? "application/json" : "text/plain";
+  const nome   = `veo3-${estiloAtual}-${getTotalSecs()}s.${ext}`;
+
+  const blob = new Blob([ta.value], { type });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `veo3-prompt-${estiloAtual}-${duracaoAtual}s.json`;
-  a.click();
+  a.href = url; a.download = nome; a.click();
   URL.revokeObjectURL(url);
 
   const s = document.getElementById("status");
-  s.textContent = "Arquivo baixado!";
-  setTimeout(() => { s.textContent = ""; }, 2000);
+  s.textContent = `Arquivo "${nome}" baixado!`;
+  setTimeout(() => { s.textContent = ""; }, 2500);
 }
 
-// --- Limpar ---
+// ── Limpar ────────────────────────────────────────────────────────────────────
 
 function limpar() {
   document.getElementById("gato").value     = "";
   document.getElementById("cachorro").value = "";
   document.getElementById("saida").value    = "";
-  document.getElementById("status").textContent      = "";
+  document.getElementById("status").textContent        = "";
   document.getElementById("count-gato").textContent     = "0 / 200";
   document.getElementById("count-cachorro").textContent = "0 / 200";
   localStorage.removeItem("veo3_gato");
