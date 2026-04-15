@@ -82,8 +82,9 @@ button:hover {
   <option value="cachorro">Cachorro</option>
 </select>
 
-<button onclick="gerar('engracado','lite')">🟢 VEO LITE (estável)</button>
-<button onclick="gerar('engracado','fast')">🔴 VEO FAST (rápido)</button>
+<!-- BOTÕES CORRETOS -->
+<button onclick="gerar('lite')">🟢 VEO LITE (estável)</button>
+<button onclick="gerar('fast')">🔴 VEO FAST (rápido)</button>
 
 <button onclick="copiar()">Copiar Prompt</button>
 <button onclick="limpar()">Limpar</button>
@@ -91,7 +92,7 @@ button:hover {
 <textarea id="saida"></textarea>
 
 <script>
-function gerar(tipo, modelo) {
+function gerar(modelo) {
 
   const gato = document.getElementById("gato").value.trim();
   const cachorro = document.getElementById("cachorro").value.trim();
@@ -102,45 +103,32 @@ function gerar(tipo, modelo) {
     return;
   }
 
-  let tomGato = "tom natural";
-  let tomCachorro = "tom natural";
-
-  if (tipo === "engracado") {
-    tomGato = "tom debochado leve";
-    tomCachorro = "tom levemente confuso";
-  }
-
-  if (tipo === "viral") {
-    tomGato = "timing de humor estilo meme";
-    tomCachorro = "resposta curta e impactante";
-  }
-
   let sequencia = "";
 
   if (quem === "gato") {
     sequencia = `
 [0s - 3s]
-GATO fala:
+O GATO da esquerda fala:
 "${gato}"
 
 [3s - 4s]
-CACHORRO observa.
+O cachorro observa o gato.
 
 [4s - 6s]
-CACHORRO responde:
+O CACHORRO da direita responde:
 "${cachorro}"
 `;
   } else {
     sequencia = `
 [0s - 3s]
-CACHORRO fala:
+O CACHORRO da direita fala:
 "${cachorro}"
 
 [3s - 4s]
-GATO observa.
+O gato observa o cachorro.
 
 [4s - 6s]
-GATO responde:
+O GATO da esquerda responde:
 "${gato}"
 `;
   }
@@ -150,18 +138,33 @@ GATO responde:
   // 🟢 LITE (ESTÁVEL)
   if (modelo === "lite") {
     prompt = `
-Cena: podcast em estúdio moderno, fundo desfocado.
+Cena: podcast em estúdio moderno, iluminação quente, fundo desfocado.
 
+CÂMERA:
 Plano fixo médio.
+Sem cortes.
+Sem zoom.
 
-À esquerda: gato cinza.
-À direita: cachorro caramelo.
+POSIÇÃO FIXA:
+À esquerda: GATO CINZA realista.
+À direita: CACHORRO CARAMELO realista.
 
-Ambos são animais reais, sem roupas.
+APARÊNCIA:
+Sem roupas.
+Sem acessórios.
+Sem humanização.
 
-Gato usa voz Rasalgethi.
-Cachorro usa voz Achird.
+VOZES:
+Gato → Rasalgethi
+Cachorro → Achird
 
+REGRAS:
+- Não inverter personagens
+- Não inverter falas
+- Quem fala move a boca
+- Um fala por vez
+
+SEQUÊNCIA:
 ${sequencia}
 
 [6s - 8s]
@@ -174,10 +177,10 @@ Ambos reagem naturalmente.
     prompt = `
 Cena dinâmica de podcast.
 
-Gato fala (${tomGato}):
+Gato fala:
 "${gato}"
 
-Cachorro responde (${tomCachorro}):
+Cachorro responde:
 "${cachorro}"
 
 Reação leve no final.
