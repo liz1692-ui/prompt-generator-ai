@@ -181,6 +181,13 @@ textarea {
 </div>
 
 <div class="box">
+  <label class="toggle-box" for="strictDialogueMode">
+    <input type="checkbox" id="strictDialogueMode" checked>
+    <span>🔒 Modo de Diálogo Estrito</span>
+  </label>
+</div>
+
+<div class="box">
   <div class="btn-group">
     <button class="copiar" onclick="copiar()">Copiar JSON</button>
     <button class="limpar" onclick="limpar()">Limpar</button>
@@ -273,6 +280,7 @@ function gerar(modelo) {
   const cachorro = document.getElementById("cachorro").value.trim();
   const quem     = document.getElementById("quem").value;
   const continuar = document.getElementById("continuarCena").checked;
+  const strict    = document.getElementById("strictDialogueMode").checked;
 
   if (!gato || !cachorro) {
     alert("Preencha as falas do gato e do cachorro!");
@@ -281,27 +289,38 @@ function gerar(modelo) {
 
   const tom = TONS[estiloAtual];
 
-  const seq1 = quem === "gato"
-    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro, 0)
-    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato, 0);
+  const buildAndValidate = (first, fl, ft, second, sl, st, offset) => {
+    const raw = buildSeq(first, fl, ft, second, sl, st, offset);
+    return strict ? validateSeq(raw) : raw;
+  };
+
+  const [first, fl, ft, second, sl, st] = quem === "gato"
+    ? ["cat", gato, tom.gato, "dog", cachorro, tom.cachorro]
+    : ["dog", cachorro, tom.cachorro, "cat", gato, tom.gato];
+
+  const seq1 = buildAndValidate(first, fl, ft, second, sl, st, 0);
+
+  const base = buildSceneBase(modelo);
+  const rules = strict
+    ? { ...base.rules, ...strictRules() }
+    : base.rules;
 
   let json;
 
   if (!continuar) {
     json = {
-      ...buildSceneBase(modelo),
-      camera: { ...buildSceneBase(modelo).camera, duration_seconds: 8 },
+      ...base,
+      camera: { ...base.camera, duration_seconds: 8 },
+      rules,
       sequence: seq1
     };
   } else {
-    const seq2 = quem === "gato"
-      ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro, 8)
-      : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato, 8);
+    const seq2 = buildAndValidate(first, fl, ft, second, sl, st, 8);
 
-    const base = buildSceneBase(modelo);
     json = {
       ...base,
       camera: { ...base.camera, duration_seconds: 16 },
+      rules,
       continuation_rules: {
         no_restart: true,
         same_characters: true,
@@ -330,9 +349,9 @@ function gerar(modelo) {
   }
 
   document.getElementById("saida").value = JSON.stringify(json, null, 2);
-  document.getElementById("status").textContent = continuar
-    ? "JSON com continuação gerado (16s — 2 cenas)."
-    : "JSON gerado. Pronto para copiar.";
+  const durMsg = continuar ? "16s — 2 cenas" : "8s";
+  const strictMsg = strict ? " | 🔒 Modo Estrito ativo" : "";
+  document.getElementById("status").textContent = `JSON gerado (${durMsg}).${strictMsg}`;
 }
 
 function gerarComContinuacao() {
@@ -341,55 +360,92 @@ function gerarComContinuacao() {
   gerar(modelo);
 }
 
+const VOICE_MAP = { cat: "Rasalgethi", dog: "Achird" };
+
 function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, offset) {
 
   const o = offset || 0;
-  const voiceFirst  = first === "cat" ? "Rasalgethi" : "Achird";
-  const voiceSecond = second === "cat" ? "Rasalgethi" : "Achird";
-  const posFirst    = first === "cat" ? "LEFT" : "RIGHT";
-  const posSecond   = second === "cat" ? "LEFT" : "RIGHT";
-  const labelFirst  = first === "cat" ? "character_LEFT" : "character_RIGHT";
-  const labelSecond = second === "cat" ? "character_LEFT" : "character_RIGHT";
 
   return [
     {
       timestamp: `${o}s-${o+3}s`,
-      character: labelFirst,
-      position: posFirst,
-      voice: voiceFirst,
+      speaker: first,
+      voice: VOICE_MAP[first],
       action: "speaks",
       tone: firstTone,
       line: firstLine,
       lip_sync: true,
-      other_character: "watches silently, no mouth movement"
+      listeners: [second],
+      listeners_action: "silent, no mouth movement"
     },
     {
       timestamp: `${o+3}s-${o+4}s`,
-      character: labelSecond,
-      position: posSecond,
-      action: "watches_silently",
-      lip_sync: false,
-      expression: "listening attentive"
+      speaker: null,
+      action: "pause_reaction",
+      characters: [first, second],
+      lip_sync: false
     },
     {
       timestamp: `${o+4}s-${o+6}s`,
-      character: labelSecond,
-      position: posSecond,
-      voice: voiceSecond,
+      speaker: second,
+      voice: VOICE_MAP[second],
       action: "speaks",
       tone: secondTone,
       line: secondLine,
       lip_sync: true,
-      other_character: "watches silently, no mouth movement"
+      listeners: [first],
+      listeners_action: "silent, no mouth movement"
     },
     {
       timestamp: `${o+6}s-${o+8}s`,
+      speaker: null,
       action: "both_react_naturally",
-      characters: [labelFirst, labelSecond],
-      movement: "subtle natural reaction",
+      characters: [first, second],
       lip_sync: false
     }
   ];
+}
+
+function validateSeq(blocks) {
+  return blocks.map(b => {
+    const fixed = { ...b };
+
+    // speaker=null mas tem line → remover line
+    if (fixed.speaker === null && fixed.line) {
+      delete fixed.line;
+    }
+
+    // speaker definido sem voice → adicionar
+    if (fixed.speaker && !fixed.voice) {
+      fixed.voice = VOICE_MAP[fixed.speaker];
+    }
+
+    // speaker definido mas lip_sync != true → corrigir
+    if (fixed.speaker && fixed.lip_sync !== true) {
+      fixed.lip_sync = true;
+    }
+
+    // speaker definido sem listeners → adicionar
+    if (fixed.speaker && (!fixed.listeners || fixed.listeners.length === 0)) {
+      const all = ["cat", "dog"];
+      fixed.listeners = all.filter(c => c !== fixed.speaker);
+      fixed.listeners_action = "silent, no mouth movement";
+    }
+
+    return fixed;
+  });
+}
+
+function strictRules() {
+  return {
+    STRICT_SPEAKER_MODE: true,
+    ONLY_ONE_SPEAKER_PER_BLOCK: true,
+    IGNORE_NON_SPEAKER_AUDIO: true,
+    LOCK_VOICE_TO_CHARACTER: true,
+    NO_DIALOGUE_SWAP: true,
+    NO_VOICE_SWAP: true,
+    NO_ACTION_CONFUSION: true
+  };
 }
 
 function copiar() {
