@@ -124,6 +124,8 @@ button:not(.ativo):hover { opacity: 0.9; }
 .fast      { background: #ef4444; }
 .gerar-json{ background: #1d4ed8; }
 .gerar-txt { background: #7c3aed; }
+.extender  { background: #059669; opacity: 1; border: 2px solid #34d399; }
+.extender:hover { opacity: 0.9; }
 .copiar    { background: #1e293b; }
 .download  { background: #0e7490; }
 .limpar    { background: #334155; }
@@ -151,6 +153,22 @@ button:not(.ativo):hover { opacity: 0.9; }
 .custom-dur span {
   font-size: 12px;
   color: #64748b;
+}
+
+.box-ext {
+  border: 1px solid #064e3b;
+}
+
+.badge-dur {
+  font-size: 11px;
+  background: #064e3b;
+  color: #34d399;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 textarea#saida {
@@ -214,9 +232,9 @@ textarea#saida {
   </div>
 </div>
 
-<!-- EXTENSÃO DE CENA -->
+<!-- DURAÇÃO INICIAL -->
 <div class="box">
-  <h3>Extensão de Cena</h3>
+  <h3>Duração Inicial</h3>
   <div class="btn-group" id="grupo-extensao">
     <button class="ext ativo"  onclick="setExtensao(8,      this)">8 seg</button>
     <button class="ext"        onclick="setExtensao(16,     this)">16 seg</button>
@@ -238,7 +256,7 @@ textarea#saida {
   </div>
 </div>
 
-<!-- AÇÕES -->
+<!-- AÇÕES PRINCIPAIS -->
 <div class="box">
   <div class="btn-group">
     <button class="gerar-json" onclick="gerar()">Gerar JSON</button>
@@ -251,6 +269,19 @@ textarea#saida {
   </div>
 </div>
 
+<!-- EXTENDER CENA (aparece após gerar) -->
+<div class="box box-ext" id="secao-ext" style="display:none">
+  <h3>Extender Cena <span id="badge-dur" class="badge-dur"></span></h3>
+  <label class="campo-label">
+    <span id="ext-speaker-label">Próxima fala</span>
+    <span id="count-ext" class="contador">0 / 200</span>
+  </label>
+  <textarea class="entrada" id="ext-linha" maxlength="200" placeholder="Digite a próxima fala..."></textarea>
+  <div class="btn-group" style="margin-top:10px">
+    <button class="extender" onclick="extenderCena()">🔁 Extender Cena (+8s)</button>
+  </div>
+</div>
+
 <textarea id="saida" readonly placeholder="O prompt aparecerá aqui..."></textarea>
 <div id="status"></div>
 
@@ -259,6 +290,10 @@ textarea#saida {
 let estiloAtual   = "normal";
 let extensaoAtual = 8;
 let modeloAtual   = "lite";
+
+// ── Memória do sistema ────────────────────────────────────────────────────────
+let currentJSON   = null;   // último JSON gerado (objeto JS)
+let ultimoSpeaker = null;   // label do último personagem que falou
 
 const TONS = {
   normal:    { gato: "calm natural",       cachorro: "calm natural"       },
@@ -283,6 +318,12 @@ function setupContador(idCampo, idContador) {
 
 setupContador("gato",     "count-gato");
 setupContador("cachorro", "count-cachorro");
+
+document.getElementById("ext-linha").addEventListener("input", () => {
+  const len = document.getElementById("ext-linha").value.length;
+  document.getElementById("count-ext").textContent = `${len} / 200`;
+  document.getElementById("count-ext").style.color = len > 180 ? "#f87171" : "#475569";
+});
 
 // ── Estado ────────────────────────────────────────────────────────────────────
 
@@ -366,7 +407,7 @@ function restaurarStorage() {
 restaurarStorage();
 document.getElementById("quem").addEventListener("change", salvarStorage);
 
-// ── Duração total ─────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getTotalSecs() {
   if (extensaoAtual === "livre") {
@@ -375,20 +416,51 @@ function getTotalSecs() {
   return extensaoAtual;
 }
 
-// ── Helpers de personagem ─────────────────────────────────────────────────────
-
 function resolvePersonagens(quem) {
-  const first  = quem === "gato" ? "cat" : "dog";
-  const second = first === "cat" ? "dog" : "cat";
+  const isCat = quem === "gato";
   return {
-    first, second,
-    voiceFirst:  first === "cat" ? "Rasalgethi" : "Achird",
-    voiceSecond: second === "cat" ? "Rasalgethi" : "Achird",
-    posFirst:    first === "cat" ? "LEFT"  : "RIGHT",
-    posSecond:   second === "cat" ? "LEFT" : "RIGHT",
-    labelFirst:  first === "cat" ? "character_LEFT"  : "character_RIGHT",
-    labelSecond: second === "cat" ? "character_LEFT" : "character_RIGHT"
+    labelFirst:  isCat ? "character_LEFT"  : "character_RIGHT",
+    labelSecond: isCat ? "character_RIGHT" : "character_LEFT",
+    voiceFirst:  isCat ? "Rasalgethi" : "Achird",
+    voiceSecond: isCat ? "Achird" : "Rasalgethi",
+    posFirst:    isCat ? "LEFT"  : "RIGHT",
+    posSecond:   isCat ? "RIGHT" : "LEFT"
   };
+}
+
+function speakerOposto(label) {
+  return label === "character_LEFT" ? "character_RIGHT" : "character_LEFT";
+}
+
+function speakerVoz(label) {
+  return label === "character_LEFT" ? "Rasalgethi" : "Achird";
+}
+
+function speakerPos(label) {
+  return label === "character_LEFT" ? "LEFT" : "RIGHT";
+}
+
+function speakerTom(label) {
+  const tom = TONS[estiloAtual];
+  return label === "character_LEFT" ? tom.gato : tom.cachorro;
+}
+
+function speakerNome(label) {
+  return label === "character_LEFT"
+    ? "Gato — Rasalgethi (esquerda)"
+    : "Cachorro — Achird (direita)";
+}
+
+// ── Painel de extensão ────────────────────────────────────────────────────────
+
+function atualizarPainelExtensao() {
+  const dur  = currentJSON.camera.duration_seconds;
+  const next = speakerOposto(ultimoSpeaker);
+  document.getElementById("badge-dur").textContent         = `${dur}s → ${dur + 8}s`;
+  document.getElementById("ext-speaker-label").textContent = `Próxima fala: ${speakerNome(next)}`;
+  document.getElementById("ext-linha").value               = "";
+  document.getElementById("count-ext").textContent         = "0 / 200";
+  document.getElementById("secao-ext").style.display       = "block";
 }
 
 // ── Gerar JSON ────────────────────────────────────────────────────────────────
@@ -400,141 +472,184 @@ function gerar() {
 
   if (!gatoVal || !cachorroVal) { alert("Preencha as falas do gato e do cachorro!"); return; }
 
-  const tom       = TONS[estiloAtual];
-  const totalSecs = getTotalSecs();
-  const numBlocks = Math.max(1, Math.ceil(totalSecs / 8));
-  const p         = resolvePersonagens(quem);
-
+  const tom        = TONS[estiloAtual];
+  const totalSecs  = getTotalSecs();
+  const p          = resolvePersonagens(quem);
   const firstLine  = quem === "gato" ? gatoVal     : cachorroVal;
   const secondLine = quem === "gato" ? cachorroVal : gatoVal;
   const firstTone  = quem === "gato" ? tom.gato    : tom.cachorro;
   const secondTone = quem === "gato" ? tom.cachorro : tom.gato;
 
-  // Bloco 1: diálogo principal — sequência contínua, sem bloco de "assistindo"
-  const block1Seq = [
+  // Bloco inicial (0s-8s) — sequência contínua
+  const sequence = [
     {
       timestamp: "0s-3.5s",
       character: p.labelFirst,
-      position: p.posFirst,
-      voice: p.voiceFirst,
-      action: "speaks",
-      tone: firstTone,
-      line: firstLine,
-      lip_sync: true,
+      position:  p.posFirst,
+      voice:     p.voiceFirst,
+      action:    "speaks",
+      tone:      firstTone,
+      line:      firstLine,
+      lip_sync:  true,
       other_character: "watches silently, no mouth movement"
     },
     {
-      timestamp: "3.5s-7s",
+      timestamp: "3.5s-6.5s",
       character: p.labelSecond,
-      position: p.posSecond,
-      voice: p.voiceSecond,
-      action: "speaks",
-      tone: secondTone,
-      line: secondLine,
-      lip_sync: true,
+      position:  p.posSecond,
+      voice:     p.voiceSecond,
+      action:    "speaks",
+      tone:      secondTone,
+      line:      secondLine,
+      lip_sync:  true,
       other_character: "watches silently, no mouth movement"
     },
     {
-      timestamp: "7s-8s",
-      action: "both_react_naturally",
+      timestamp: "6.5s-8s",
+      action:    "both_react_naturally",
       characters: [p.labelFirst, p.labelSecond],
-      movement: "subtle natural reaction",
-      lip_sync: false
+      movement:  "subtle natural reaction",
+      lip_sync:  false
     }
   ];
 
-  const blocks = [{ block: 1, timestamp: "0s-8s", sequence: block1Seq }];
-
-  // Blocos extras: extensão contínua
-  for (let i = 2; i <= numBlocks; i++) {
-    const s = (i - 1) * 8;
-    const e = i * 8;
-    blocks.push({
-      block: i,
-      timestamp: `${s}s-${e}s`,
-      continuity: "seamless_extension",
-      sequence: [
-        {
-          timestamp: `${s}s-${e}s`,
-          action: "extend_scene_naturally",
-          characters: [p.labelFirst, p.labelSecond],
-          instruction: "continue dialogue naturally from previous block — same scene, same characters, no reset, maintain lip-sync rules"
-        }
-      ]
+  // Se duração inicial > 8s, adicionar blocos de extensão natural
+  for (let s = 8; s < totalSecs; s += 8) {
+    const e = s + 8;
+    sequence.push({
+      timestamp:   `${s}s-${e}s`,
+      action:      "extend_scene_naturally",
+      characters:  [p.labelFirst, p.labelSecond],
+      instruction: "continue dialogue naturally — same scene, same characters, same voices, no reset"
     });
   }
 
-  const json = {
+  currentJSON = {
     veo_model: modeloAtual === "lite" ? "VEO_LITE" : "VEO_FAST",
-    style: estiloAtual,
-    total_duration_seconds: totalSecs,
-    total_blocks: numBlocks,
+    style:     estiloAtual,
     scene: {
-      type: "podcast_studio",
-      lighting: "warm cinematic amber",
+      type:       "podcast_studio",
+      lighting:   "warm cinematic amber",
       background: "blurred dark studio bokeh",
-      props: ["two microphones", "two black podcast mugs", "desk"],
-      realism: "photorealistic"
+      props:      ["two microphones", "two black podcast mugs", "desk"],
+      realism:    "photorealistic"
     },
     camera: {
-      shot: "fixed medium shot",
-      cuts: false,
-      zoom: false,
-      pan: false,
-      movement: false
+      shot:             "fixed medium shot",
+      cuts:             false,
+      zoom:             false,
+      pan:              false,
+      movement:         false,
+      duration_seconds: totalSecs
     },
     characters: [
       {
-        id: "character_LEFT",
-        position: "LEFT",
-        species: "realistic gray cat",
-        appearance: "real animal anatomy, sitting upright at desk",
-        clothes: false,
-        accessories: false,
-        humanization: false,
-        voice_id: "Rasalgethi",
+        id:               "character_LEFT",
+        position:         "LEFT",
+        species:          "realistic gray cat",
+        appearance:       "real animal anatomy, sitting upright at desk",
+        clothes:          false,
+        accessories:      false,
+        humanization:     false,
+        voice_id:         "Rasalgethi",
         appearance_locked: true
       },
       {
-        id: "character_RIGHT",
-        position: "RIGHT",
-        species: "realistic caramel dog",
-        appearance: "real animal anatomy, sitting upright at desk",
-        clothes: false,
-        accessories: false,
-        humanization: false,
-        voice_id: "Achird",
+        id:               "character_RIGHT",
+        position:         "RIGHT",
+        species:          "realistic caramel dog",
+        appearance:       "real animal anatomy, sitting upright at desk",
+        clothes:          false,
+        accessories:      false,
+        humanization:     false,
+        voice_id:         "Achird",
         appearance_locked: true
       }
     ],
     dialogue_control: {
-      first_speaker: p.labelFirst,
-      strict_order: true,
+      first_speaker:    p.labelFirst,
+      strict_order:     true,
       enforce_timeline: true,
-      interruptions: false
+      interruptions:    false
     },
     rules: {
-      swap_characters: false,
-      swap_dialogue: false,
-      swap_voices: false,
-      lip_sync: "only_active_speaker",
+      swap_characters:     false,
+      swap_dialogue:       false,
+      swap_voices:         false,
+      lip_sync:            "only_active_speaker",
       simultaneous_speech: false,
-      add_scene_elements: false,
-      modify_appearance: false,
-      modify_set: false
+      add_scene_elements:  false,
+      modify_appearance:   false,
+      modify_set:          false
     },
     continuity_rules: {
-      scene_continuity: true,
-      character_memory: true,
-      voice_consistency: true,
-      no_reset_between_blocks: true
+      scene_continuity:         true,
+      character_memory:         true,
+      voice_consistency:        true,
+      no_reset_between_blocks:  true
     },
-    blocks: blocks
+    sequence: sequence
   };
 
-  document.getElementById("saida").value = JSON.stringify(json, null, 2);
+  ultimoSpeaker = p.labelSecond;
+
+  renderizar();
+  atualizarPainelExtensao();
   document.getElementById("status").textContent =
-    `JSON gerado — ${numBlocks} bloco(s) × 8s = ${totalSecs}s total.`;
+    `JSON gerado — ${totalSecs}s. Use "Extender Cena" para continuar.`;
+}
+
+// ── Extender Cena (+8s) ───────────────────────────────────────────────────────
+
+function extenderCena() {
+  if (!currentJSON) { alert("Gere o prompt primeiro!"); return; }
+
+  const novaFala = document.getElementById("ext-linha").value.trim();
+  if (!novaFala) { alert("Digite a próxima fala!"); return; }
+
+  const dur    = currentJSON.camera.duration_seconds;
+  const inicio = dur;
+  const fim    = dur + 8;
+  const mid    = inicio + 4;
+
+  const proxSpeaker = speakerOposto(ultimoSpeaker);
+
+  // Adicionar nova fala
+  currentJSON.sequence.push({
+    timestamp:       `${inicio}s-${mid}s`,
+    character:       proxSpeaker,
+    position:        speakerPos(proxSpeaker),
+    voice:           speakerVoz(proxSpeaker),
+    action:          "speaks",
+    tone:            speakerTom(proxSpeaker),
+    line:            novaFala,
+    lip_sync:        true,
+    other_character: "watches silently, no mouth movement"
+  });
+
+  // Adicionar reação
+  currentJSON.sequence.push({
+    timestamp:  `${mid}s-${fim}s`,
+    action:     "both_react_naturally",
+    characters: ["character_LEFT", "character_RIGHT"],
+    movement:   "subtle natural reaction",
+    lip_sync:   false
+  });
+
+  // Atualizar duração
+  currentJSON.camera.duration_seconds = fim;
+  ultimoSpeaker = proxSpeaker;
+
+  renderizar();
+  atualizarPainelExtensao();
+
+  const blocos = Math.round(fim / 8);
+  document.getElementById("status").textContent =
+    `Cena extendida! Total: ${fim}s (${blocos} blocos de 8s)`;
+}
+
+function renderizar() {
+  document.getElementById("saida").value = JSON.stringify(currentJSON, null, 2);
 }
 
 // ── Gerar Texto Livre ─────────────────────────────────────────────────────────
@@ -546,65 +661,44 @@ function gerarTextoLivre() {
 
   if (!gatoVal || !cachorroVal) { alert("Preencha as falas do gato e do cachorro!"); return; }
 
-  const tom       = TONS[estiloAtual];
-  const totalSecs = getTotalSecs();
-  const numBlocks = Math.max(1, Math.ceil(totalSecs / 8));
-  const p         = resolvePersonagens(quem);
-
-  const nomePrimeiro  = quem === "gato" ? "Gato (Rasalgethi, esquerda)" : "Cachorro (Achird, direita)";
-  const nomeSegundo   = quem === "gato" ? "Cachorro (Achird, direita)"  : "Gato (Rasalgethi, esquerda)";
-  const primeiraFala  = quem === "gato" ? gatoVal     : cachorroVal;
-  const segundaFala   = quem === "gato" ? cachorroVal : gatoVal;
-  const primeiroTom   = quem === "gato" ? tom.gato    : tom.cachorro;
-  const segundoTom    = quem === "gato" ? tom.cachorro : tom.gato;
-  const estiloLabel   = { normal: "Normal", engracado: "Engraçado", treta: "Treta", viral: "Viral" }[estiloAtual];
-
-  let blocosExtra = "";
-  if (numBlocks > 1) {
-    const linhas = [];
-    for (let i = 2; i <= numBlocks; i++) {
-      const s = (i - 1) * 8, e = i * 8;
-      linhas.push(`  Bloco ${i} [${s}s–${e}s]: continue naturalmente — mesma cena, mesmos personagens, sem reiniciar.`);
-    }
-    blocosExtra = "\n\nBLOCOS DE EXTENSÃO:\n" + linhas.join("\n");
-  }
+  const tom          = TONS[estiloAtual];
+  const p            = resolvePersonagens(quem);
+  const nomePrimeiro = quem === "gato" ? "Gato (Rasalgethi, esquerda)" : "Cachorro (Achird, direita)";
+  const nomeSegundo  = quem === "gato" ? "Cachorro (Achird, direita)"  : "Gato (Rasalgethi, esquerda)";
+  const primeiraFala = quem === "gato" ? gatoVal     : cachorroVal;
+  const segundaFala  = quem === "gato" ? cachorroVal : gatoVal;
+  const primeiroTom  = quem === "gato" ? tom.gato    : tom.cachorro;
+  const segundoTom   = quem === "gato" ? tom.cachorro : tom.gato;
+  const estiloLabel  = { normal: "Normal", engracado: "Engraçado", treta: "Treta", viral: "Viral" }[estiloAtual];
 
   const texto =
-`Crie um vídeo de podcast fotorrealista com duração total de ${totalSecs} segundos.
+`Crie um vídeo de podcast fotorrealista com duração de 8 segundos.
 
-CENÁRIO: Estúdio de podcast. Iluminação âmbar cinematográfica. Fundo escuro desfocado (bokeh). Mesa com dois microfones e duas canecas pretas de podcast.
+CENÁRIO: Estúdio de podcast. Iluminação âmbar cinematográfica. Fundo escuro desfocado. Mesa com dois microfones e duas canecas pretas.
 
 PERSONAGENS:
 - À esquerda: gato cinza fotorrealista. Anatomia animal real, sentado ereto. Voz: Rasalgethi.
 - À direita: cachorro caramelo fotorrealista. Anatomia animal real, sentado ereto. Voz: Achird.
 
-CÂMERA: Plano médio fixo. Sem cortes, zoom ou movimentos de câmera. Realismo fotográfico.
+CÂMERA: Plano médio fixo. Sem cortes, zoom ou movimentos. Realismo fotográfico.
 
 ESTILO: ${estiloLabel}
 
-DIÁLOGO — Bloco 1 [0s–8s]:
-[0s–3.5s]  ${nomePrimeiro} fala (${primeiroTom}):
-           "${primeiraFala}"
+DIÁLOGO:
+[0s–3.5s]   ${nomePrimeiro} fala (${primeiroTom}):
+            "${primeiraFala}"
 
-[3.5s–7s]  ${nomeSegundo} responde (${segundoTom}):
-           "${segundaFala}"
+[3.5s–6.5s] ${nomeSegundo} responde (${segundoTom}):
+            "${segundaFala}"
 
-[7s–8s]    Ambos reagem naturalmente. Sem fala. Lip-sync desativado.${blocosExtra}
+[6.5s–8s]   Ambos reagem naturalmente. Lip-sync desativado.
 
-CONTROLE DE DIÁLOGO:
-- Primeiro a falar: ${p.labelFirst}. Ordem estrita, sem interrupções.
-- Lip-sync ativado apenas para quem está falando. O outro mantém boca fechada.
+CONTROLE: Primeiro a falar: ${p.labelFirst}. Ordem estrita, sem interrupções.
 
-REGRAS OBRIGATÓRIAS:
-- Gato sempre usa voz Rasalgethi. Cachorro sempre usa voz Achird.
-- Sem inversão de personagens, vozes ou posições.
-- Aparência travada: gato sempre cinza, cachorro sempre caramelo.
-- Sem elementos extras ou modificações de cena.
-- Continuidade perfeita entre blocos: mesma cena, sem reset.`;
+REGRAS: Lip-sync apenas no personagem ativo. Sem inversão de vozes ou personagens. Aparência travada.`;
 
   document.getElementById("saida").value = texto;
-  document.getElementById("status").textContent =
-    `Texto livre gerado — ${numBlocks} bloco(s) × 8s = ${totalSecs}s total.`;
+  document.getElementById("status").textContent = "Texto livre gerado.";
 }
 
 // ── Copiar ────────────────────────────────────────────────────────────────────
@@ -632,7 +726,8 @@ function baixar() {
   const isJson = ta.value.trimStart().startsWith("{");
   const ext    = isJson ? "json" : "txt";
   const type   = isJson ? "application/json" : "text/plain";
-  const nome   = `veo3-${estiloAtual}-${getTotalSecs()}s.${ext}`;
+  const dur    = currentJSON ? currentJSON.camera.duration_seconds : getTotalSecs();
+  const nome   = `veo3-${estiloAtual}-${dur}s.${ext}`;
 
   const blob = new Blob([ta.value], { type });
   const url  = URL.createObjectURL(blob);
@@ -641,19 +736,24 @@ function baixar() {
   URL.revokeObjectURL(url);
 
   const s = document.getElementById("status");
-  s.textContent = `Arquivo "${nome}" baixado!`;
+  s.textContent = `"${nome}" baixado!`;
   setTimeout(() => { s.textContent = ""; }, 2500);
 }
 
 // ── Limpar ────────────────────────────────────────────────────────────────────
 
 function limpar() {
-  document.getElementById("gato").value     = "";
-  document.getElementById("cachorro").value = "";
-  document.getElementById("saida").value    = "";
-  document.getElementById("status").textContent        = "";
+  document.getElementById("gato").value                 = "";
+  document.getElementById("cachorro").value             = "";
+  document.getElementById("saida").value                = "";
+  document.getElementById("ext-linha").value            = "";
+  document.getElementById("status").textContent         = "";
   document.getElementById("count-gato").textContent     = "0 / 200";
   document.getElementById("count-cachorro").textContent = "0 / 200";
+  document.getElementById("count-ext").textContent      = "0 / 200";
+  document.getElementById("secao-ext").style.display    = "none";
+  currentJSON   = null;
+  ultimoSpeaker = null;
   localStorage.removeItem("veo3_gato");
   localStorage.removeItem("veo3_cachorro");
 }
