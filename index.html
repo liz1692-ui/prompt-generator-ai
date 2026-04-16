@@ -2,636 +2,322 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VEO3 Prompt Generator PRO</title>
+<title>Gerador JSON VEO3</title>
+
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: #020617;
-  color: #e2e8f0;
-  padding: 24px 16px;
-  min-height: 100vh;
+  color: white;
+  padding: 20px;
+  max-width: 720px;
+  margin: auto;
 }
 
-.container { max-width: 820px; margin: 0 auto; }
-
-h1 {
+h2 {
   text-align: center;
-  font-size: 22px;
-  color: #f8fafc;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  margin-bottom: 20px;
 }
 
-.subtitle {
-  text-align: center;
-  font-size: 11px;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 26px;
-}
-
-.card {
+.box {
   background: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 14px;
-  padding: 18px;
+  padding: 15px;
+  border-radius: 12px;
   margin-bottom: 14px;
 }
 
-.card-title {
-  font-size: 11px;
-  font-weight: bold;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 14px;
-}
-
-label {
-  display: block;
-  font-size: 12px;
+.box h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
   color: #94a3b8;
-  margin-bottom: 5px;
-  margin-top: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-label:first-of-type { margin-top: 0; }
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: none;
+  background: #1e293b;
+  color: white;
+  font-size: 14px;
+}
 
-input[type="text"],
-input[type="number"],
+input:first-child { margin-top: 0; }
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px;
+  margin-top: 0;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+  transition: border 0.15s, opacity 0.15s;
+  color: white;
+  opacity: 0.7;
+}
+
+button.ativo {
+  border: 2px solid white;
+  opacity: 1;
+}
+
+button:not(.ativo):hover { opacity: 0.9; }
+
+.normal   { background: #3b82f6; }
+.engracado{ background: #f59e0b; color: #000; }
+.treta    { background: #ef4444; }
+.viral    { background: #8b5cf6; }
+.lite     { background: #22c55e; color: #000; }
+.fast     { background: #ef4444; }
+.copiar   { background: #1e293b; }
+.limpar   { background: #334155; }
+
 textarea {
   width: 100%;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  color: #f1f5f9;
-  font-size: 13px;
-  padding: 10px 12px;
-  outline: none;
-  transition: border-color 0.15s;
-  font-family: inherit;
-}
-
-input[type="text"]:focus,
-input[type="number"]:focus,
-textarea:focus { border-color: #3b82f6; }
-
-textarea { resize: vertical; line-height: 1.6; }
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 14px;
-}
-
-@media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
-
-.char-card {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 14px;
-  padding: 18px;
-}
-
-.char-card.dog { border-top: 3px solid #f59e0b; }
-.char-card.cat { border-top: 3px solid #8b5cf6; }
-
-.char-title {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-
-.char-card.dog .char-title { color: #f59e0b; }
-.char-card.cat .char-title { color: #8b5cf6; }
-
-.duration-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.duration-row input[type="number"] {
-  width: 140px;
-  flex-shrink: 0;
-  font-size: 20px;
-  text-align: center;
-  padding: 10px;
-}
-
-.duration-info {
-  font-size: 12px;
-  color: #475569;
-  line-height: 1.7;
-}
-
-.duration-info span {
-  color: #60a5fa;
-  font-weight: bold;
-}
-
-.checkbox-group { display: flex; flex-direction: column; gap: 12px; }
-
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-.checkbox-item input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #3b82f6;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.checkbox-item span { font-size: 13px; color: #cbd5e1; }
-
-.btn-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.btn {
-  flex: 1;
-  min-width: 130px;
-  padding: 13px 16px;
-  border: none;
+  height: 480px;
+  margin-top: 14px;
   border-radius: 10px;
-  font-weight: bold;
-  font-size: 13px;
-  cursor: pointer;
-  color: white;
-  transition: transform 0.1s, opacity 0.15s;
-}
-
-.btn:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn:active { transform: translateY(0); }
-
-.btn-json { background: #3b82f6; }
-.btn-text { background: #22c55e; color: #000; }
-.btn-both { background: #8b5cf6; }
-
-.output-area {
-  width: 100%;
-  min-height: 520px;
-  background: #020617;
-  border: 1px solid #1e293b;
-  border-radius: 10px;
-  color: #22c55e;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
   padding: 14px;
+  background: #020617;
+  color: #22c55e;
+  font-family: monospace;
+  font-size: 12px;
+  border: 1px solid #1e293b;
   resize: vertical;
-  line-height: 1.6;
 }
-
-.btn-copy {
-  width: 100%;
-  margin-top: 10px;
-  padding: 11px;
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #94a3b8;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background 0.15s, color 0.15s;
-}
-
-.btn-copy:hover { background: #334155; color: white; }
 
 #status {
   text-align: center;
   font-size: 12px;
   color: #64748b;
-  margin-top: 8px;
+  margin-top: 6px;
   height: 18px;
-}
-
-.tag {
-  display: inline-block;
-  background: #1e293b;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 11px;
-  color: #60a5fa;
-  margin: 2px;
 }
 </style>
 </head>
+
 <body>
-<div class="container">
 
-  <h1>VEO3 Prompt Generator PRO</h1>
-  <p class="subtitle">Gerador de Prompts para Vídeo — Extensão Inteligente de Cena</p>
+<h2>Gerador JSON VEO3 — Podcast</h2>
 
-  <!-- Cena & Ambiente -->
-  <div class="card">
-    <div class="card-title">🎬 Cena &amp; Ambiente</div>
-    <label>Descrição da Cena</label>
-    <input type="text" id="scene" placeholder="Ex: Podcast estúdio com dois animais debatendo...">
-    <label>Ambiente</label>
-    <input type="text" id="environment" placeholder="Ex: Estúdio escuro, luzes âmbar, fundo desfocado, dois microfones...">
-    <label>Estilo Visual</label>
-    <input type="text" id="style" placeholder="Ex: Fotorrealista, cinemático, 4K, alta definição...">
-    <label>Câmera Base</label>
-    <input type="text" id="camera" placeholder="Ex: Plano médio fixo, cortes suaves entre personagens...">
-  </div>
-
-  <!-- Duração -->
-  <div class="card">
-    <div class="card-title">⏱ Duração Total</div>
-    <div class="duration-row">
-      <input type="number" id="duration" value="16" min="8" step="8">
-      <div class="duration-info">
-        segundos<br>
-        <span id="blocks-preview">→ 2 blocos de 8s</span><br>
-        <span class="tag">8s=1</span>
-        <span class="tag">16s=2</span>
-        <span class="tag">40s=5</span>
-        <span class="tag">64s=8</span>
-        <span class="tag">120s=15</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Personagens -->
-  <div class="grid-2">
-    <div class="char-card dog">
-      <div class="char-title">🐶 Cachorro</div>
-      <label>Descrição</label>
-      <input type="text" id="dog-desc" placeholder="Ex: Labrador caramel, realista, anatomia animal...">
-      <label>Tom de Voz</label>
-      <input type="text" id="dog-voice" placeholder="Ex: Entusiasmado, animado, confiante...">
-      <label>Fala completa</label>
-      <textarea id="dog-speech" rows="7" placeholder="Digite toda a fala do cachorro aqui. O sistema vai dividir automaticamente entre os blocos de 8s, mantendo continuidade e naturalidade..."></textarea>
-    </div>
-    <div class="char-card cat">
-      <div class="char-title">🐱 Gato</div>
-      <label>Descrição</label>
-      <input type="text" id="cat-desc" placeholder="Ex: Gato cinza realista, anatomia animal...">
-      <label>Tom de Voz</label>
-      <input type="text" id="cat-voice" placeholder="Ex: Sarcástico, calmo, irônico...">
-      <label>Fala completa</label>
-      <textarea id="cat-speech" rows="7" placeholder="Digite toda a fala do gato aqui. O sistema vai dividir automaticamente entre os blocos de 8s, mantendo continuidade e naturalidade..."></textarea>
-    </div>
-  </div>
-
-  <!-- Opções -->
-  <div class="card">
-    <div class="card-title">⚙️ Opções de Geração</div>
-    <div class="checkbox-group">
-      <label class="checkbox-item">
-        <input type="checkbox" id="opt-json" checked>
-        <span>Gerar JSON estruturado (VEO3)</span>
-      </label>
-      <label class="checkbox-item">
-        <input type="checkbox" id="opt-text" checked>
-        <span>Gerar Texto Normal</span>
-      </label>
-      <label class="checkbox-item">
-        <input type="checkbox" id="opt-extend" checked>
-        <span>Estender automaticamente em blocos de 8s — variar câmera, ação e emoção por bloco</span>
-      </label>
-    </div>
-  </div>
-
-  <!-- Botões -->
-  <div class="card">
-    <div class="btn-row">
-      <button class="btn btn-json" onclick="gerarJSON()">🔵 Gerar JSON</button>
-      <button class="btn btn-text" onclick="gerarTexto()">🟢 Gerar Texto</button>
-      <button class="btn btn-both" onclick="gerarAmbos()">🟣 Gerar Ambos</button>
-    </div>
-  </div>
-
-  <!-- Saída -->
-  <div class="card">
-    <div class="card-title">📦 Saída — Prompt Gerado</div>
-    <textarea class="output-area" id="output" readonly placeholder="O prompt gerado aparecerá aqui...&#10;&#10;Preencha os campos acima e clique em um dos botões para gerar."></textarea>
-    <button class="btn-copy" onclick="copiar()">📋 Copiar</button>
-    <div id="status"></div>
-  </div>
-
+<div class="box">
+  <h3>Falas</h3>
+  <input id="gato"     placeholder="Fala do gato (voz Rasalgethi)">
+  <input id="cachorro" placeholder="Fala do cachorro (voz Achird)">
+  <select id="quem" style="margin-top:8px">
+    <option value="gato">Gato começa</option>
+    <option value="cachorro">Cachorro começa</option>
+  </select>
 </div>
 
+<div class="box">
+  <h3>Estilo</h3>
+  <div class="btn-group">
+    <button class="normal ativo"    onclick="setEstilo('normal',    this)">Normal</button>
+    <button class="engracado"       onclick="setEstilo('engracado', this)">Engraçado</button>
+    <button class="treta"           onclick="setEstilo('treta',     this)">Treta</button>
+    <button class="viral"           onclick="setEstilo('viral',     this)">Viral</button>
+  </div>
+</div>
+
+<div class="box">
+  <h3>Modelo VEO</h3>
+  <div class="btn-group">
+    <button class="lite" onclick="gerar('lite')">VEO LITE</button>
+    <button class="fast" onclick="gerar('fast')">VEO FAST</button>
+  </div>
+</div>
+
+<div class="box">
+  <div class="btn-group">
+    <button class="copiar" onclick="copiar()">Copiar JSON</button>
+    <button class="limpar" onclick="limpar()">Limpar</button>
+  </div>
+</div>
+
+<textarea id="saida" readonly placeholder="O prompt JSON aparecerá aqui..."></textarea>
+<div id="status"></div>
+
 <script>
-// ─── Variações de câmera ───────────────────────────────────────────────────
-const CAMERAS = [
-  "fixed medium shot, both characters framed symmetrically",
-  "close-up on active speaker, shallow depth of field",
-  "wide two-shot, full studio environment visible",
-  "over-the-shoulder from listener's perspective",
-  "reaction close-up on silent character",
-  "medium shot with subtle slow push-in",
-  "cinematic two-shot, low angle slightly",
-  "profile medium shot, side angle view",
-  "tight close-up on speaker's face",
-  "wide establishing shot, environment emphasis"
-];
 
-// ─── Variações de ação ─────────────────────────────────────────────────────
-const DOG_SPEAK  = [
-  "speaks with enthusiasm, leaning slightly forward",
-  "delivers line energetically, tail energy visible",
-  "addresses camera directly, confident posture",
-  "speaks with conviction, head raised",
-  "gestures expressively while speaking"
-];
-const DOG_LISTEN = [
-  "listens attentively, head tilted",
-  "nods slowly in acknowledgment",
-  "reacts with visible interest",
-  "watches intently without moving",
-  "shifts slightly, focused on speaker"
-];
-const CAT_SPEAK  = [
-  "responds with calm authority, measured pace",
-  "delivers line with dry precision",
-  "speaks thoughtfully, slight pause before",
-  "replies with subtle wit, composed posture",
-  "articulates carefully, holding eye contact"
-];
-const CAT_LISTEN = [
-  "observes with quiet intensity, ears forward",
-  "blinks slowly, considering the words",
-  "raises an eyebrow, unimpressed expression",
-  "watches with subtle amusement",
-  "sits perfectly still, absorbing every word"
-];
+let estiloAtual = "normal";
 
-// ─── Utilitário ────────────────────────────────────────────────────────────
-function pick(arr, i) { return arr[i % arr.length]; }
+const TONS = {
+  normal:    { gato: "calm natural",       cachorro: "calm natural"     },
+  engracado: { gato: "sarcastic mocking",  cachorro: "confused amused"  },
+  treta:     { gato: "provocative bold",   cachorro: "irritated tense"  },
+  viral:     { gato: "meme humor absurd",  cachorro: "shocking impactful"}
+};
 
-// ─── Preview de blocos ao digitar ─────────────────────────────────────────
-document.getElementById('duration').addEventListener('input', function() {
-  const v = Math.max(8, parseInt(this.value) || 8);
-  const b = Math.ceil(v / 8);
-  document.getElementById('blocks-preview').textContent =
-    '→ ' + b + ' bloco' + (b > 1 ? 's' : '') + ' de 8s';
-});
-
-// ─── Divisão natural de falas ─────────────────────────────────────────────
-function splitSpeech(text, parts) {
-  if (!text || !text.trim()) return Array(parts).fill('');
-  if (parts <= 1) return [text.trim()];
-
-  // 1. Por frases (. ! ?)
-  const sentences = text.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g);
-  if (sentences && sentences.length >= parts) {
-    return mergeChunks(sentences.map(s => s.trim()).filter(Boolean), parts);
-  }
-
-  // 2. Por vírgulas / ponto e vírgula
-  const clauses = text.split(/,\s*|;\s*/).map(s => s.trim()).filter(Boolean);
-  if (clauses.length >= parts) {
-    return mergeChunks(clauses, parts);
-  }
-
-  // 3. Por palavras
-  const words = text.trim().split(/\s+/);
-  return mergeChunks(words, parts);
+function setEstilo(estilo, btn) {
+  estiloAtual = estilo;
+  document.querySelectorAll(".btn-group button").forEach(b => {
+    if (b.classList.contains("normal") || b.classList.contains("engracado") ||
+        b.classList.contains("treta")  || b.classList.contains("viral")) {
+      b.classList.remove("ativo");
+    }
+  });
+  btn.classList.add("ativo");
 }
 
-function mergeChunks(items, parts) {
-  const result = [];
-  const base  = Math.floor(items.length / parts);
-  const extra = items.length % parts;
-  let idx = 0;
-  for (let i = 0; i < parts; i++) {
-    const size = base + (i < extra ? 1 : 0);
-    result.push(items.slice(idx, idx + size).join(' ').trim());
-    idx += size;
-  }
-  return result;
-}
+function gerar(modelo) {
 
-// ─── Coleta de dados do formulário ────────────────────────────────────────
-function getData() {
-  const rawDur  = parseInt(document.getElementById('duration').value) || 16;
-  const duration = Math.max(8, rawDur);
-  const blocks   = Math.ceil(duration / 8);
-  return {
-    scene:       document.getElementById('scene').value.trim(),
-    environment: document.getElementById('environment').value.trim(),
-    style:       document.getElementById('style').value.trim(),
-    camera:      document.getElementById('camera').value.trim(),
-    duration,
-    blocks,
-    dog: {
-      desc:   document.getElementById('dog-desc').value.trim(),
-      voice:  document.getElementById('dog-voice').value.trim(),
-      speech: document.getElementById('dog-speech').value.trim()
+  const gato     = document.getElementById("gato").value.trim();
+  const cachorro = document.getElementById("cachorro").value.trim();
+  const quem     = document.getElementById("quem").value;
+
+  if (!gato || !cachorro) {
+    alert("Preencha as falas do gato e do cachorro!");
+    return;
+  }
+
+  const tom = TONS[estiloAtual];
+
+  const seq = quem === "gato"
+    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro)
+    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato);
+
+  const json = {
+    veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
+    style: estiloAtual,
+    scene: {
+      type: "podcast_studio",
+      lighting: "warm cinematic amber",
+      background: "blurred dark studio bokeh",
+      props: ["two microphones", "two black podcast mugs", "desk"],
+      realism: "photorealistic"
     },
-    cat: {
-      desc:   document.getElementById('cat-desc').value.trim(),
-      voice:  document.getElementById('cat-voice').value.trim(),
-      speech: document.getElementById('cat-speech').value.trim()
+    camera: {
+      shot: "fixed medium shot",
+      cuts: false,
+      zoom: false,
+      pan: false,
+      movement: false,
+      duration_seconds: 8
     },
-    extend: document.getElementById('opt-extend').checked
-  };
-}
-
-// ─── Construção das cenas ─────────────────────────────────────────────────
-function buildScenes(data) {
-  const { blocks, dog, cat, extend } = data;
-
-  // Distribui falas pelos blocos de cada personagem
-  const dogParts = splitSpeech(dog.speech, blocks);
-  const catParts = splitSpeech(cat.speech, blocks);
-
-  const scenes = [];
-
-  for (let i = 0; i < blocks; i++) {
-    const tStart = i * 8;
-    const tEnd   = tStart + 8;
-
-    // Câmera varia por bloco quando "estender" está ativo
-    const camBase  = data.camera || pick(CAMERAS, 0);
-    const cam1 = extend ? pick(CAMERAS, i)          : camBase;
-    const cam2 = extend ? pick(CAMERAS, i + blocks) : camBase;
-
-    // Alterna quem fala primeiro em cada bloco
-    const dogFirst     = (i % 2 === 0);
-    const firstChar    = dogFirst ? 'dog'    : 'cat';
-    const secondChar   = dogFirst ? 'cat'    : 'dog';
-    const firstSpeech  = dogFirst ? dogParts[i] : catParts[i];
-    const secondSpeech = dogFirst ? catParts[i] : dogParts[i];
-
-    // Ação depende se há fala ou não
-    const firstAction  = dogFirst
-      ? (firstSpeech  ? pick(DOG_SPEAK,  i) : pick(DOG_LISTEN, i))
-      : (firstSpeech  ? pick(CAT_SPEAK,  i) : pick(CAT_LISTEN, i));
-    const secondAction = dogFirst
-      ? (secondSpeech ? pick(CAT_SPEAK,  i) : pick(CAT_LISTEN, i))
-      : (secondSpeech ? pick(DOG_SPEAK,  i) : pick(DOG_LISTEN, i));
-
-    // Emoção evolui ao longo dos blocos
-    const emotions    = ['neutral', 'curious', 'engaged', 'amused', 'surprised', 'reflective', 'intense', 'calm'];
-    const emotion     = pick(emotions, i);
-
-    const entry1 = {
-      time:   tStart + 's-' + (tStart + 4) + 's',
-      camera: cam1,
-      action: firstAction,
-      emotion: emotion
-    };
-    if (firstSpeech) entry1.dialogue = { character: firstChar, text: firstSpeech };
-
-    const entry2 = {
-      time:   (tStart + 4) + 's-' + tEnd + 's',
-      camera: cam2,
-      action: secondAction,
-      emotion: pick(emotions, i + 1)
-    };
-    if (secondSpeech) entry2.dialogue = { character: secondChar, text: secondSpeech };
-
-    scenes.push({
-      scene_id:        'S' + (i + 1),
-      time_range:      tStart + 's-' + tEnd + 's',
-      duration:        '8s',
-      camera_setup:    cam1,
-      action_timeline: [entry1, entry2]
-    });
-  }
-
-  return scenes;
-}
-
-// ─── Gerador JSON ─────────────────────────────────────────────────────────
-function buildJSON(data) {
-  const scenes = buildScenes(data);
-  const obj = {
-    scene:          data.scene       || 'Podcast studio — animated animal debate',
-    total_duration: data.duration    + 's',
-    total_blocks:   data.blocks,
-    style:          data.style       || 'photorealistic, cinematic, 4K',
-    camera:         data.camera      || 'fixed medium shot',
-    environment:    data.environment || 'dark studio, warm amber lighting, bokeh background, two microphones, podcast desk',
     characters: [
       {
-        id:          'dog',
-        description: data.dog.desc  || 'realistic caramel labrador, real animal anatomy, sitting upright',
-        voice_tone:  data.dog.voice || 'enthusiastic, energetic',
-        voice_id:    'Achird',
-        position:    'RIGHT'
+        id: "character_LEFT",
+        position: "LEFT",
+        species: "realistic gray cat",
+        appearance: "real animal anatomy, sitting upright at desk",
+        clothes: false,
+        accessories: false,
+        humanization: false,
+        voice_id: "Rasalgethi",
+        appearance_locked: true
       },
       {
-        id:          'cat',
-        description: data.cat.desc  || 'realistic gray cat, real animal anatomy, sitting upright',
-        voice_tone:  data.cat.voice || 'calm, sarcastic',
-        voice_id:    'Rasalgethi',
-        position:    'LEFT'
+        id: "character_RIGHT",
+        position: "RIGHT",
+        species: "realistic caramel dog",
+        appearance: "real animal anatomy, sitting upright at desk",
+        clothes: false,
+        accessories: false,
+        humanization: false,
+        voice_id: "Achird",
+        appearance_locked: true
       }
     ],
     rules: {
-      swap_characters:      false,
-      swap_voices:          false,
-      lip_sync:             'only_active_speaker',
-      simultaneous_speech:  false,
-      humanization:         false,
-      clothes:              false,
-      add_scene_elements:   false,
-      modify_appearance:    false,
-      appearance_locked:    true
+      swap_characters: false,
+      swap_dialogue: false,
+      swap_voices: false,
+      lip_sync: "only_active_speaker",
+      simultaneous_speech: false,
+      add_scene_elements: false,
+      modify_appearance: false,
+      modify_set: false
     },
-    scenes: scenes
+    sequence: seq
   };
-  return JSON.stringify(obj, null, 2);
+
+  document.getElementById("saida").value = JSON.stringify(json, null, 2);
+  document.getElementById("status").textContent = "JSON gerado. Pronto para copiar.";
 }
 
-// ─── Gerador Texto ────────────────────────────────────────────────────────
-function buildText(data) {
-  const scenes = buildScenes(data);
-  const lines  = [];
+function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
 
-  lines.push('╔' + '═'.repeat(58) + '╗');
-  lines.push('║  VEO3 PROMPT — ' + data.duration + 's (' + data.blocks + ' BLOCO' + (data.blocks > 1 ? 'S' : '') + ' DE 8s)' + ' '.repeat(Math.max(0, 38 - String(data.duration).length - String(data.blocks).length)) + '║');
-  lines.push('╚' + '═'.repeat(58) + '╝');
-  lines.push('');
-  lines.push('CENA       : ' + (data.scene       || 'Podcast estúdio'));
-  lines.push('AMBIENTE   : ' + (data.environment || 'Estúdio escuro, iluminação âmbar cinemática'));
-  lines.push('ESTILO     : ' + (data.style       || 'Fotorrealista, cinemático, 4K'));
-  lines.push('CÂMERA BASE: ' + (data.camera      || 'Plano médio fixo'));
-  lines.push('DURAÇÃO    : ' + data.duration + 's  |  ' + data.blocks + ' bloco' + (data.blocks > 1 ? 's' : '') + ' de 8s');
-  lines.push('');
-  lines.push('PERSONAGENS:');
-  lines.push('  🐶 CACHORRO — ' + (data.dog.desc  || 'Labrador caramel realista'));
-  lines.push('     Tom de voz: ' + (data.dog.voice || 'Entusiasmado'));
-  lines.push('  🐱 GATO — ' + (data.cat.desc  || 'Gato cinza realista'));
-  lines.push('     Tom de voz: ' + (data.cat.voice || 'Calmo e sarcástico'));
-  lines.push('');
-  lines.push('TIMELINE COMPLETA:');
-  lines.push('');
+  const voiceFirst  = first === "cat" ? "Rasalgethi" : "Achird";
+  const voiceSecond = second === "cat" ? "Rasalgethi" : "Achird";
+  const posFirst    = first === "cat" ? "LEFT" : "RIGHT";
+  const posSecond   = second === "cat" ? "LEFT" : "RIGHT";
+  const labelFirst  = first === "cat" ? "character_LEFT" : "character_RIGHT";
+  const labelSecond = second === "cat" ? "character_LEFT" : "character_RIGHT";
 
-  for (const scene of scenes) {
-    lines.push('┌─ ' + scene.scene_id + ' [' + scene.time_range + '] ' + '─'.repeat(Math.max(2, 44 - scene.time_range.length)));
-    lines.push('│  📷 ' + scene.camera_setup);
-    for (const e of scene.action_timeline) {
-      lines.push('│');
-      lines.push('│  ⏱  [' + e.time + ']  ' + e.action + '  (estado: ' + e.emotion + ')');
-      if (e.dialogue) {
-        const icon = e.dialogue.character === 'dog' ? '🐶' : '🐱';
-        const name = e.dialogue.character === 'dog' ? 'CACHORRO' : 'GATO';
-        lines.push('│     ' + icon + ' ' + name + ': "' + e.dialogue.text + '"');
-        lines.push('│     lip_sync: ativo  |  outros: boca fechada');
-      } else {
-        lines.push('│     [sem fala — ação silenciosa]');
-      }
+  return [
+    {
+      timestamp: "0s-3s",
+      character: labelFirst,
+      position: posFirst,
+      voice: voiceFirst,
+      action: "speaks",
+      tone: firstTone,
+      line: firstLine,
+      lip_sync: true,
+      other_character: "watches silently, no mouth movement"
+    },
+    {
+      timestamp: "3s-4s",
+      character: labelSecond,
+      position: posSecond,
+      action: "watches_silently",
+      lip_sync: false,
+      expression: "listening attentive"
+    },
+    {
+      timestamp: "4s-6s",
+      character: labelSecond,
+      position: posSecond,
+      voice: voiceSecond,
+      action: "speaks",
+      tone: secondTone,
+      line: secondLine,
+      lip_sync: true,
+      other_character: "watches silently, no mouth movement"
+    },
+    {
+      timestamp: "6s-8s",
+      action: "both_react_naturally",
+      characters: [labelFirst, labelSecond],
+      movement: "subtle natural reaction",
+      lip_sync: false
     }
-    lines.push('└' + '─'.repeat(52));
-    lines.push('');
-  }
-
-  lines.push('═'.repeat(60));
-  lines.push('FIM DO PROMPT — ' + data.duration + 's  |  ' + data.blocks + ' bloco' + (data.blocks > 1 ? 's' : ''));
-  lines.push('═'.repeat(60));
-
-  return lines.join('\n');
-}
-
-// ─── Handlers dos botões ──────────────────────────────────────────────────
-function gerarJSON() {
-  const data = getData();
-  document.getElementById('output').value = buildJSON(data);
-  setStatus('JSON gerado — ' + data.blocks + ' bloco' + (data.blocks > 1 ? 's' : '') + ' de 8s (' + data.duration + 's total).');
-}
-
-function gerarTexto() {
-  const data = getData();
-  document.getElementById('output').value = buildText(data);
-  setStatus('Texto gerado — ' + data.blocks + ' bloco' + (data.blocks > 1 ? 's' : '') + ' de 8s (' + data.duration + 's total).');
-}
-
-function gerarAmbos() {
-  const data = getData();
-  const sep  = '\n\n' + '═'.repeat(60) + '\n JSON ESTRUTURADO (VEO3)\n' + '═'.repeat(60) + '\n\n';
-  document.getElementById('output').value = buildText(data) + sep + buildJSON(data);
-  setStatus('Texto + JSON gerados — ' + data.blocks + ' bloco' + (data.blocks > 1 ? 's' : '') + ' (' + data.duration + 's).');
+  ];
 }
 
 function copiar() {
-  const out = document.getElementById('output');
-  if (!out.value) { alert('Gere o prompt primeiro!'); return; }
-  out.select();
-  document.execCommand('copy');
-  setStatus('Copiado!');
-  setTimeout(() => { document.getElementById('status').textContent = ''; }, 2000);
+  const ta = document.getElementById("saida");
+  if (!ta.value) { alert("Gere o prompt primeiro!"); return; }
+  ta.select();
+  document.execCommand("copy");
+  const s = document.getElementById("status");
+  s.textContent = "Copiado!";
+  setTimeout(() => { s.textContent = ""; }, 2000);
 }
 
-function setStatus(msg) {
-  document.getElementById('status').textContent = msg;
+function limpar() {
+  document.getElementById("gato").value = "";
+  document.getElementById("cachorro").value = "";
+  document.getElementById("saida").value = "";
+  document.getElementById("status").textContent = "";
 }
+
 </script>
+
 </body>
 </html>
