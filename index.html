@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Gerador PRO VEO3</title>
+<title>Gerador VEO Simples</title>
 
 <style>
 body {
@@ -10,11 +10,9 @@ body {
   background: #020617;
   color: white;
   padding: 20px;
-  max-width: 700px;
+  max-width: 600px;
   margin: auto;
 }
-
-h2 { text-align: center; }
 
 .box {
   background: #0f172a;
@@ -23,10 +21,10 @@ h2 { text-align: center; }
   margin-bottom: 15px;
 }
 
-input, select, textarea {
+input, select {
   width: 100%;
   padding: 12px;
-  margin-top: 8px;
+  margin-top: 10px;
   border-radius: 10px;
   border: none;
   background: #1e293b;
@@ -35,25 +33,28 @@ input, select, textarea {
 
 button {
   width: 100%;
-  padding: 14px;
-  margin-top: 10px;
+  padding: 12px;
+  margin-top: 8px;
   border-radius: 10px;
   border: none;
   font-weight: bold;
   cursor: pointer;
 }
 
-.normal { background: #3b82f6; }
-.engracado { background: #f59e0b; }
-.treta { background: #ef4444; }
-.viral { background: #8b5cf6; }
-
-.lite { background: #22c55e; }
-.fast { background: #ef4444; }
-.extend { background: #06b6d4; }
+.normal { background:#3b82f6; }
+.engracado { background:#f59e0b; }
+.treta { background:#ef4444; }
+.viral { background:#8b5cf6; }
+.lite { background:#22c55e; }
+.extend { background:#06b6d4; }
 
 textarea {
-  height: 300px;
+  width: 100%;
+  height: 260px;
+  margin-top: 15px;
+  border-radius: 10px;
+  padding: 10px;
+  background: #020617;
   color: #22c55e;
 }
 </style>
@@ -61,7 +62,7 @@ textarea {
 
 <body>
 
-<h2>🐱🐶 Gerador PRO VEO3</h2>
+<h2>🐱🐶 Gerador Simples</h2>
 
 <div class="box">
 <select id="quem">
@@ -69,8 +70,8 @@ textarea {
   <option value="cachorro">🐶 Cachorro começa</option>
 </select>
 
-<input id="fala1" placeholder="Fala 1 (quem começa)">
-<input id="fala2" placeholder="Fala 2 (resposta)">
+<input id="gato" placeholder="Fala do gato">
+<input id="cachorro" placeholder="Fala do cachorro">
 </div>
 
 <div class="box">
@@ -81,126 +82,82 @@ textarea {
 </div>
 
 <div class="box">
-<button class="lite" onclick="gerar('lite')">🟢 VEO LITE</button>
-<button class="fast" onclick="gerar('fast')">🔴 VEO FAST</button>
-<button class="extend" onclick="extenderCena()">🔁 Extender Cena (+8s)</button>
+<button class="lite" onclick="gerar()">Gerar JSON</button>
+<button class="extend" onclick="extender()">Extender Cena</button>
 </div>
 
 <textarea id="saida"></textarea>
 
 <script>
 
-let estiloAtual = "normal";
-let currentJSON = null;
+let estilo = "normal";
+let cena = null;
 
-function setEstilo(estilo) {
-  estiloAtual = estilo;
+function setEstilo(e) {
+  estilo = e;
 }
 
-function gerar(modelo) {
+function gerar() {
 
-  let fala1 = document.getElementById("fala1").value.trim();
-  let fala2 = document.getElementById("fala2").value.trim();
+  let gato = document.getElementById("gato").value;
+  let cachorro = document.getElementById("cachorro").value;
   let quem = document.getElementById("quem").value;
 
-  if (!fala1 || !fala2) {
-    alert("Preencha as falas!");
+  if (!gato || !cachorro) {
+    alert("Preencha as falas");
     return;
   }
 
   let first, second;
 
   if (quem === "gato") {
-    first = { id: "character_LEFT", voice: "Rasalgethi", line: fala1 };
-    second = { id: "character_RIGHT", voice: "Achird", line: fala2 };
+    first = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
+    second = { id:"character_RIGHT", voice:"Achird", line:cachorro };
   } else {
-    first = { id: "character_RIGHT", voice: "Achird", line: fala1 };
-    second = { id: "character_LEFT", voice: "Rasalgethi", line: fala2 };
+    first = { id:"character_RIGHT", voice:"Achird", line:cachorro };
+    second = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
   }
 
-  currentJSON = {
-    veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
-    style: estiloAtual,
-
-    scene: {
-      type: "podcast_studio"
-    },
-
-    camera: {
-      duration_seconds: 8
-    },
-
-    characters: [
-      { id: "character_LEFT", voice_id: "Rasalgethi" },
-      { id: "character_RIGHT", voice_id: "Achird" }
-    ],
-
+  cena = {
+    style: estilo,
+    camera: { duration_seconds: 8 },
     sequence: [
-      {
-        timestamp: "0s-3.5s",
-        character: first.id,
-        voice: first.voice,
-        action: "speaks",
-        line: first.line
-      },
-      {
-        timestamp: "3.5s-6.5s",
-        character: second.id,
-        voice: second.voice,
-        action: "speaks",
-        line: second.line
-      },
-      {
-        timestamp: "6.5s-8s",
-        action: "both_react_naturally"
-      }
+      { timestamp:"0-3", character:first.id, line:first.line },
+      { timestamp:"3-6", character:second.id, line:second.line }
     ]
   };
 
   render();
 }
 
-function extenderCena() {
+function extender() {
 
-  if (!currentJSON) {
-    alert("Gere primeiro!");
+  if (!cena) {
+    alert("Gere primeiro");
     return;
   }
 
-  let dur = currentJSON.camera.duration_seconds;
-  let inicio = dur;
-  let fim = dur + 8;
+  let dur = cena.camera.duration_seconds;
+  let ultimo = cena.sequence[cena.sequence.length-1];
 
-  let ultima = currentJSON.sequence.filter(s => s.character).slice(-1)[0];
-
-  let proximo = ultima.character === "character_LEFT"
+  let proximo = ultimo.character === "character_LEFT"
     ? "character_RIGHT"
     : "character_LEFT";
 
-  let voz = proximo === "character_LEFT" ? "Rasalgethi" : "Achird";
+  cena.sequence.push({
+    timestamp: dur + "-" + (dur+4),
+    character: proximo,
+    line: "continua..."
+  });
 
-  currentJSON.sequence.push(
-    {
-      timestamp: `${inicio}s-${inicio+4}s`,
-      character: proximo,
-      voice: voz,
-      action: "speaks",
-      line: "continua a conversa..."
-    },
-    {
-      timestamp: `${inicio+4}s-${fim}s`,
-      action: "both_react_naturally"
-    }
-  );
-
-  currentJSON.camera.duration_seconds = fim;
+  cena.camera.duration_seconds += 8;
 
   render();
 }
 
 function render() {
   document.getElementById("saida").value =
-    JSON.stringify(currentJSON, null, 2);
+    JSON.stringify(cena, null, 2);
 }
 
 </script>
