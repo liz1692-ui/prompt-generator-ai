@@ -227,6 +227,18 @@ textarea { resize: vertical; line-height: 1.6; }
   color: #60a5fa;
   margin: 2px;
 }
+
+/* ── Botões de estilo e speaker ─────────────────────────────────────── */
+.s-btn { border: 2px solid transparent !important; opacity: 0.65; }
+.s-btn.ativo { border: 2px solid white !important; opacity: 1; }
+.s-btn:not(.ativo):hover { opacity: 0.85; }
+.s-normal    { background: #3b82f6; }
+.s-engracado { background: #f59e0b; color: #000 !important; }
+.s-treta     { background: #ef4444; }
+.s-viral     { background: #8b5cf6; }
+.s-dog-first { background: #f59e0b; color: #000 !important; }
+.s-cat-first { background: #8b5cf6; }
+.btn-extend  { background: #0ea5e9; min-width: 180px !important; }
 </style>
 </head>
 <body>
@@ -262,6 +274,26 @@ textarea { resize: vertical; line-height: 1.6; }
         <span class="tag">64s=8</span>
         <span class="tag">120s=15</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Estilo da Cena -->
+  <div class="card">
+    <div class="card-title">🎨 Estilo da Cena</div>
+    <div class="btn-row">
+      <button class="btn s-btn s-normal ativo"   onclick="setEstilo('normal',    this)">Normal</button>
+      <button class="btn s-btn s-engracado"       onclick="setEstilo('engracado', this)">Engraçado</button>
+      <button class="btn s-btn s-treta"           onclick="setEstilo('treta',     this)">Treta</button>
+      <button class="btn s-btn s-viral"           onclick="setEstilo('viral',     this)">Viral</button>
+    </div>
+  </div>
+
+  <!-- Quem Começa Falando -->
+  <div class="card">
+    <div class="card-title">🎙️ Quem Começa Falando?</div>
+    <div class="btn-row">
+      <button class="btn s-btn s-cat-first ativo" onclick="setFirstSpeaker('character_LEFT',  this)">🐱 Gato (LEFT)</button>
+      <button class="btn s-btn s-dog-first"        onclick="setFirstSpeaker('character_RIGHT', this)">🐶 Cachorro (RIGHT)</button>
     </div>
   </div>
 
@@ -312,6 +344,7 @@ textarea { resize: vertical; line-height: 1.6; }
       <button class="btn btn-json" onclick="gerarJSON()">🔵 Gerar JSON</button>
       <button class="btn btn-text" onclick="gerarTexto()">🟢 Gerar Texto</button>
       <button class="btn btn-both" onclick="gerarAmbos()">🟣 Gerar Ambos</button>
+      <button class="btn btn-extend" onclick="extenderCena()">🔁 Extender Cena (+8s)</button>
     </div>
   </div>
 
@@ -326,6 +359,31 @@ textarea { resize: vertical; line-height: 1.6; }
 </div>
 
 <script>
+// ─── Estado global ────────────────────────────────────────────────────────
+let estiloAtual  = 'normal';
+let firstSpeaker = 'character_LEFT';
+
+function setEstilo(estilo, btn) {
+  estiloAtual = estilo;
+  document.querySelectorAll('.s-btn').forEach(b => {
+    if (b.classList.contains('s-normal')    || b.classList.contains('s-engracado') ||
+        b.classList.contains('s-treta')     || b.classList.contains('s-viral')) {
+      b.classList.remove('ativo');
+    }
+  });
+  btn.classList.add('ativo');
+}
+
+function setFirstSpeaker(speaker, btn) {
+  firstSpeaker = speaker;
+  document.querySelectorAll('.s-btn').forEach(b => {
+    if (b.classList.contains('s-cat-first') || b.classList.contains('s-dog-first')) {
+      b.classList.remove('ativo');
+    }
+  });
+  btn.classList.add('ativo');
+}
+
 // ─── Variações de câmera ───────────────────────────────────────────────────
 const CAMERAS = [
   "fixed medium shot, both characters framed symmetrically",
@@ -461,8 +519,9 @@ function buildScenes(data) {
     const cam1 = extend ? pick(CAMERAS, i)          : camBase;
     const cam2 = extend ? pick(CAMERAS, i + blocks) : camBase;
 
-    // Alterna quem fala primeiro em cada bloco
-    const dogFirst     = (i % 2 === 0);
+    // Alterna quem fala primeiro respeitando firstSpeaker global
+    // character_RIGHT = dog, character_LEFT = cat
+    const dogFirst = (firstSpeaker === 'character_RIGHT') ? (i % 2 === 0) : (i % 2 !== 0);
     const firstChar    = dogFirst ? 'dog'    : 'cat';
     const secondChar   = dogFirst ? 'cat'    : 'dog';
     const firstSpeech  = dogFirst ? dogParts[i] : catParts[i];
@@ -515,9 +574,15 @@ function buildJSON(data) {
     scene:          data.scene       || 'Podcast studio — animated animal debate',
     total_duration: data.duration    + 's',
     total_blocks:   data.blocks,
-    style:          data.style       || 'photorealistic, cinematic, 4K',
+    style:          estiloAtual,
+    style_visual:   data.style       || 'photorealistic, cinematic, 4K',
     camera:         data.camera      || 'fixed medium shot',
     environment:    data.environment || 'dark studio, warm amber lighting, bokeh background, two microphones, podcast desk',
+    dialogue_control: {
+      first_speaker:  firstSpeaker,
+      second_speaker: firstSpeaker === 'character_LEFT' ? 'character_RIGHT' : 'character_LEFT',
+      rule:           'first_speaker always initiates each block'
+    },
     characters: [
       {
         id:          'dog',
@@ -534,16 +599,24 @@ function buildJSON(data) {
         position:    'LEFT'
       }
     ],
+    locked_fields: {
+      'characters.voice_id':          true,
+      'characters.appearance_locked': true,
+      'characters.species':           true,
+      'characters.position':          true
+    },
     rules: {
-      swap_characters:      false,
-      swap_voices:          false,
-      lip_sync:             'only_active_speaker',
-      simultaneous_speech:  false,
-      humanization:         false,
-      clothes:              false,
-      add_scene_elements:   false,
-      modify_appearance:    false,
-      appearance_locked:    true
+      swap_characters:          false,
+      swap_dialogue:            false,
+      swap_voices:              false,
+      lip_sync:                 'only_active_speaker',
+      simultaneous_speech:      false,
+      humanization:             false,
+      clothes:                  false,
+      add_scene_elements:       false,
+      modify_appearance:        false,
+      appearance_locked:        true,
+      preserve_characters_block: true
     },
     scenes: scenes
   };
@@ -631,6 +704,91 @@ function copiar() {
 
 function setStatus(msg) {
   document.getElementById('status').textContent = msg;
+}
+
+// ─── Extender Cena (+8s) ──────────────────────────────────────────────────
+function extenderCena() {
+  const outEl = document.getElementById('output');
+  let current;
+  try {
+    current = JSON.parse(outEl.value);
+  } catch(e) {
+    alert('Gere o JSON primeiro (botão 🔵 Gerar JSON) antes de extender!');
+    return;
+  }
+  if (!current.scenes) { alert('JSON inválido: campo "scenes" não encontrado.'); return; }
+
+  // Duração atual e nova
+  const curDur        = parseInt(current.total_duration) || 8;
+  const newDur        = curDur + 8;
+  const newTotalBlocks = Math.ceil(newDur / 8);
+  const i             = Math.ceil(curDur / 8); // índice 0-based do novo bloco
+
+  // Dados do formulário (para speech e opções)
+  const data   = getData();
+  const camBase = data.camera || pick(CAMERAS, 0);
+  const cam1   = data.extend ? pick(CAMERAS, i)                 : camBase;
+  const cam2   = data.extend ? pick(CAMERAS, i + newTotalBlocks) : camBase;
+
+  const emotions = ['neutral', 'curious', 'engaged', 'amused', 'surprised', 'reflective', 'intense', 'calm'];
+
+  // Usa firstSpeaker do JSON já gerado (preserva consistência)
+  const fs       = (current.dialogue_control && current.dialogue_control.first_speaker)
+                   ? current.dialogue_control.first_speaker
+                   : firstSpeaker;
+  const dogFirst = (fs === 'character_RIGHT') ? (i % 2 === 0) : (i % 2 !== 0);
+
+  const firstChar  = dogFirst ? 'dog' : 'cat';
+  const secondChar = dogFirst ? 'cat' : 'dog';
+
+  // Redistribui falas originais com o novo total de blocos
+  const dogParts = splitSpeech(data.dog.speech, newTotalBlocks);
+  const catParts = splitSpeech(data.cat.speech, newTotalBlocks);
+  const firstSpeech  = dogFirst ? dogParts[i] : catParts[i];
+  const secondSpeech = dogFirst ? catParts[i] : dogParts[i];
+
+  const firstAction  = dogFirst
+    ? (firstSpeech  ? pick(DOG_SPEAK,  i) : pick(DOG_LISTEN, i))
+    : (firstSpeech  ? pick(CAT_SPEAK,  i) : pick(CAT_LISTEN, i));
+  const secondAction = dogFirst
+    ? (secondSpeech ? pick(CAT_SPEAK,  i) : pick(CAT_LISTEN, i))
+    : (secondSpeech ? pick(DOG_SPEAK,  i) : pick(DOG_LISTEN, i));
+
+  const entry1 = {
+    time:    curDur + 's-' + (curDur + 4) + 's',
+    camera:  cam1,
+    action:  firstAction,
+    emotion: pick(emotions, i)
+  };
+  if (firstSpeech) entry1.dialogue = { character: firstChar, text: firstSpeech };
+
+  const entry2 = {
+    time:    (curDur + 4) + 's-' + newDur + 's',
+    camera:  cam2,
+    action:  secondAction,
+    emotion: pick(emotions, i + 1)
+  };
+  if (secondSpeech) entry2.dialogue = { character: secondChar, text: secondSpeech };
+
+  // Adiciona nova cena SEM recriar as existentes
+  current.scenes.push({
+    scene_id:        'S' + (i + 1),
+    time_range:      curDur + 's-' + newDur + 's',
+    duration:        '8s',
+    camera_setup:    cam1,
+    action_timeline: [entry1, entry2]
+  });
+
+  // Atualiza metadados
+  current.total_duration = newDur + 's';
+  current.total_blocks   = newTotalBlocks;
+  if (current.dialogue_control) {
+    current.dialogue_control.first_speaker  = fs;
+    current.dialogue_control.second_speaker = fs === 'character_LEFT' ? 'character_RIGHT' : 'character_LEFT';
+  }
+
+  outEl.value = JSON.stringify(current, null, 2);
+  setStatus('Cena extendida: +8s → ' + newDur + 's total (' + newTotalBlocks + ' blocos).');
 }
 </script>
 </body>
