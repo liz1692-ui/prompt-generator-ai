@@ -2,177 +2,319 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Gerador PRO</title>
+<title>Gerador JSON VEO3</title>
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   font-family: Arial;
   background: #020617;
   color: white;
   padding: 20px;
-  max-width: 600px;
+  max-width: 720px;
   margin: auto;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .box {
   background: #0f172a;
   padding: 15px;
   border-radius: 12px;
-  margin-bottom: 15px;
+  margin-bottom: 14px;
 }
 
-label {
+.box h3 {
+  margin: 0 0 10px 0;
   font-size: 14px;
-  opacity: 0.8;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 input, select {
   width: 100%;
   padding: 12px;
-  margin-top: 6px;
-  margin-bottom: 10px;
+  margin-top: 8px;
   border-radius: 10px;
   border: none;
   background: #1e293b;
   color: white;
+  font-size: 14px;
+}
+
+input:first-child { margin-top: 0; }
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 button {
-  width: 100%;
+  flex: 1;
+  min-width: 100px;
   padding: 12px;
-  margin-top: 8px;
+  margin-top: 0;
   border-radius: 10px;
-  border: none;
+  border: 2px solid transparent;
   font-weight: bold;
   cursor: pointer;
+  font-size: 13px;
+  transition: border 0.15s, opacity 0.15s;
+  color: white;
+  opacity: 0.7;
 }
 
-.normal { background:#3b82f6; }
-.engracado { background:#f59e0b; }
-.treta { background:#ef4444; }
-.viral { background:#8b5cf6; }
-.lite { background:#22c55e; }
-.extend { background:#06b6d4; }
+button.ativo {
+  border: 2px solid white;
+  opacity: 1;
+}
+
+button:not(.ativo):hover { opacity: 0.9; }
+
+.normal   { background: #3b82f6; }
+.engracado{ background: #f59e0b; color: #000; }
+.treta    { background: #ef4444; }
+.viral    { background: #8b5cf6; }
+.lite     { background: #22c55e; color: #000; }
+.fast     { background: #ef4444; }
+.copiar   { background: #1e293b; }
+.limpar   { background: #334155; }
 
 textarea {
   width: 100%;
-  height: 260px;
-  margin-top: 10px;
+  height: 480px;
+  margin-top: 14px;
   border-radius: 10px;
-  padding: 10px;
+  padding: 14px;
   background: #020617;
   color: #22c55e;
+  font-family: monospace;
+  font-size: 12px;
+  border: 1px solid #1e293b;
+  resize: vertical;
+}
+
+#status {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+  height: 18px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🐱🐶 Gerador PRO</h2>
+<h2>Gerador JSON VEO3 — Podcast</h2>
 
 <div class="box">
-
-<label>Quem começa falando?</label>
-<select id="quem">
-  <option value="gato">🐱 Gato começa</option>
-  <option value="cachorro">🐶 Cachorro começa</option>
-</select>
-
-<label>🐱 Fala do gato</label>
-<input id="gato" placeholder="Digite aqui">
-
-<label>🐶 Fala do cachorro</label>
-<input id="cachorro" placeholder="Digite aqui">
-
+  <h3>Falas</h3>
+  <input id="gato"     placeholder="Fala do gato (voz Rasalgethi)">
+  <input id="cachorro" placeholder="Fala do cachorro (voz Achird)">
+  <select id="quem" style="margin-top:8px">
+    <option value="gato">Gato começa</option>
+    <option value="cachorro">Cachorro começa</option>
+  </select>
 </div>
 
 <div class="box">
-<button class="normal" onclick="setEstilo('normal')">Normal</button>
-<button class="engracado" onclick="setEstilo('engracado')">Engraçado</button>
-<button class="treta" onclick="setEstilo('treta')">Treta</button>
-<button class="viral" onclick="setEstilo('viral')">Viral</button>
+  <h3>Estilo</h3>
+  <div class="btn-group">
+    <button class="normal ativo"    onclick="setEstilo('normal',    this)">Normal</button>
+    <button class="engracado"       onclick="setEstilo('engracado', this)">Engraçado</button>
+    <button class="treta"           onclick="setEstilo('treta',     this)">Treta</button>
+    <button class="viral"           onclick="setEstilo('viral',     this)">Viral</button>
+  </div>
 </div>
 
 <div class="box">
-<button class="lite" onclick="gerar()">Gerar JSON</button>
-<button class="extend" onclick="extender()">Extender Cena</button>
+  <h3>Modelo VEO</h3>
+  <div class="btn-group">
+    <button class="lite" onclick="gerar('lite')">VEO LITE</button>
+    <button class="fast" onclick="gerar('fast')">VEO FAST</button>
+  </div>
 </div>
 
-<textarea id="saida"></textarea>
+<div class="box">
+  <div class="btn-group">
+    <button class="copiar" onclick="copiar()">Copiar JSON</button>
+    <button class="limpar" onclick="limpar()">Limpar</button>
+  </div>
+</div>
+
+<textarea id="saida" readonly placeholder="O prompt JSON aparecerá aqui..."></textarea>
+<div id="status"></div>
 
 <script>
 
-let estilo = "normal";
-let cena = null;
+let estiloAtual = "normal";
 
-function setEstilo(e){ estilo = e; }
+const TONS = {
+  normal:    { gato: "calm natural",       cachorro: "calm natural"     },
+  engracado: { gato: "sarcastic mocking",  cachorro: "confused amused"  },
+  treta:     { gato: "provocative bold",   cachorro: "irritated tense"  },
+  viral:     { gato: "meme humor absurd",  cachorro: "shocking impactful"}
+};
 
-function gerar(){
+function setEstilo(estilo, btn) {
+  estiloAtual = estilo;
+  document.querySelectorAll(".btn-group button").forEach(b => {
+    if (b.classList.contains("normal") || b.classList.contains("engracado") ||
+        b.classList.contains("treta")  || b.classList.contains("viral")) {
+      b.classList.remove("ativo");
+    }
+  });
+  btn.classList.add("ativo");
+}
 
-  let gato = document.getElementById("gato").value;
-  let cachorro = document.getElementById("cachorro").value;
-  let quem = document.getElementById("quem").value;
+function gerar(modelo) {
 
-  if(!gato || !cachorro){
-    alert("Preencha as falas");
+  const gato     = document.getElementById("gato").value.trim();
+  const cachorro = document.getElementById("cachorro").value.trim();
+  const quem     = document.getElementById("quem").value;
+
+  if (!gato || !cachorro) {
+    alert("Preencha as falas do gato e do cachorro!");
     return;
   }
 
-  let first, second;
+  const tom = TONS[estiloAtual];
 
-  if(quem === "gato"){
-    first = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
-    second = { id:"character_RIGHT", voice:"Achird", line:cachorro };
-  } else {
-    first = { id:"character_RIGHT", voice:"Achird", line:cachorro };
-    second = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
-  }
+  const seq = quem === "gato"
+    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro)
+    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato);
 
-  cena = {
-    style: estilo,
-    camera: { duration_seconds: 8 },
+  const json = {
+    veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
+    style: estiloAtual,
+    scene: {
+      type: "podcast_studio",
+      lighting: "warm cinematic amber",
+      background: "blurred dark studio bokeh",
+      props: ["two microphones", "two black podcast mugs", "desk"],
+      realism: "photorealistic"
+    },
+    camera: {
+      shot: "fixed medium shot",
+      cuts: false,
+      zoom: false,
+      pan: false,
+      movement: false,
+      duration_seconds: 8
+    },
     characters: [
-      { id:"character_LEFT", voice_id:"Rasalgethi" },
-      { id:"character_RIGHT", voice_id:"Achird" }
+      {
+        id: "character_LEFT",
+        position: "LEFT",
+        species: "realistic gray cat",
+        appearance: "real animal anatomy, sitting upright at desk",
+        clothes: false,
+        accessories: false,
+        humanization: false,
+        voice_id: "Rasalgethi",
+        appearance_locked: true
+      },
+      {
+        id: "character_RIGHT",
+        position: "RIGHT",
+        species: "realistic caramel dog",
+        appearance: "real animal anatomy, sitting upright at desk",
+        clothes: false,
+        accessories: false,
+        humanization: false,
+        voice_id: "Achird",
+        appearance_locked: true
+      }
     ],
-    sequence: [
-      { timestamp:"0-3", character:first.id, line:first.line },
-      { timestamp:"3-6", character:second.id, line:second.line }
-    ]
+    rules: {
+      swap_characters: false,
+      swap_dialogue: false,
+      swap_voices: false,
+      lip_sync: "only_active_speaker",
+      simultaneous_speech: false,
+      add_scene_elements: false,
+      modify_appearance: false,
+      modify_set: false
+    },
+    sequence: seq
   };
 
-  render();
+  document.getElementById("saida").value = JSON.stringify(json, null, 2);
+  document.getElementById("status").textContent = "JSON gerado. Pronto para copiar.";
 }
 
-function extender(){
+function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
 
-  if(!cena){
-    alert("Gere primeiro");
-    return;
-  }
+  const voiceFirst  = first === "cat" ? "Rasalgethi" : "Achird";
+  const voiceSecond = second === "cat" ? "Rasalgethi" : "Achird";
+  const posFirst    = first === "cat" ? "LEFT" : "RIGHT";
+  const posSecond   = second === "cat" ? "LEFT" : "RIGHT";
+  const labelFirst  = first === "cat" ? "character_LEFT" : "character_RIGHT";
+  const labelSecond = second === "cat" ? "character_LEFT" : "character_RIGHT";
 
-  let dur = cena.camera.duration_seconds;
-
-  let ultima = cena.sequence[cena.sequence.length-1];
-
-  let proximo = ultima.character === "character_LEFT"
-    ? "character_RIGHT"
-    : "character_LEFT";
-
-  cena.sequence.push({
-    timestamp: dur + "-" + (dur+4),
-    character: proximo,
-    line: "continua..."
-  });
-
-  cena.camera.duration_seconds += 8;
-
-  render();
+  return [
+    {
+      timestamp: "0s-3s",
+      character: labelFirst,
+      position: posFirst,
+      voice: voiceFirst,
+      action: "speaks",
+      tone: firstTone,
+      line: firstLine,
+      lip_sync: true,
+      other_character: "watches silently, no mouth movement"
+    },
+    {
+      timestamp: "3s-4s",
+      character: labelSecond,
+      position: posSecond,
+      action: "watches_silently",
+      lip_sync: false,
+      expression: "listening attentive"
+    },
+    {
+      timestamp: "4s-6s",
+      character: labelSecond,
+      position: posSecond,
+      voice: voiceSecond,
+      action: "speaks",
+      tone: secondTone,
+      line: secondLine,
+      lip_sync: true,
+      other_character: "watches silently, no mouth movement"
+    },
+    {
+      timestamp: "6s-8s",
+      action: "both_react_naturally",
+      characters: [labelFirst, labelSecond],
+      movement: "subtle natural reaction",
+      lip_sync: false
+    }
+  ];
 }
 
-function render(){
-  document.getElementById("saida").value =
-    JSON.stringify(cena, null, 2);
+function copiar() {
+  const ta = document.getElementById("saida");
+  if (!ta.value) { alert("Gere o prompt primeiro!"); return; }
+  ta.select();
+  document.execCommand("copy");
+  const s = document.getElementById("status");
+  s.textContent = "Copiado!";
+  setTimeout(() => { s.textContent = ""; }, 2000);
+}
+
+function limpar() {
+  document.getElementById("gato").value = "";
+  document.getElementById("cachorro").value = "";
+  document.getElementById("saida").value = "";
+  document.getElementById("status").textContent = "";
 }
 
 </script>
