@@ -10,12 +10,8 @@ body {
   background: #020617;
   color: white;
   padding: 20px;
-  max-width: 700px;
+  max-width: 600px;
   margin: auto;
-}
-
-h2 {
-  text-align: center;
 }
 
 .box {
@@ -25,10 +21,16 @@ h2 {
   margin-bottom: 15px;
 }
 
-input {
+label {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+input, select {
   width: 100%;
   padding: 12px;
-  margin-top: 10px;
+  margin-top: 6px;
+  margin-bottom: 10px;
   border-radius: 10px;
   border: none;
   background: #1e293b;
@@ -37,36 +39,27 @@ input {
 
 button {
   width: 100%;
-  padding: 14px;
-  margin-top: 10px;
+  padding: 12px;
+  margin-top: 8px;
   border-radius: 10px;
   border: none;
   font-weight: bold;
   cursor: pointer;
 }
 
-.row {
-  display: flex;
-  gap: 10px;
-}
-
-.normal { background: #3b82f6; }
-.engracado { background: #f59e0b; }
-.treta { background: #ef4444; }
-.viral { background: #8b5cf6; }
-.lite { background: #22c55e; }
-.extend { background: #06b6d4; }
-
-.active {
-  outline: 2px solid white;
-}
+.normal { background:#3b82f6; }
+.engracado { background:#f59e0b; }
+.treta { background:#ef4444; }
+.viral { background:#8b5cf6; }
+.lite { background:#22c55e; }
+.extend { background:#06b6d4; }
 
 textarea {
   width: 100%;
-  height: 300px;
-  margin-top: 20px;
+  height: 260px;
+  margin-top: 10px;
   border-radius: 10px;
-  padding: 15px;
+  padding: 10px;
   background: #020617;
   color: #22c55e;
 }
@@ -79,13 +72,17 @@ textarea {
 
 <div class="box">
 
-<div class="row">
-<button id="btnGato" onclick="setQuem('gato')" class="active">🐱 Gato</button>
-<button id="btnCachorro" onclick="setQuem('cachorro')">🐶 Cachorro</button>
-</div>
+<label>Quem começa falando?</label>
+<select id="quem">
+  <option value="gato">🐱 Gato começa</option>
+  <option value="cachorro">🐶 Cachorro começa</option>
+</select>
 
-<input id="gato" placeholder="Fala do gato">
-<input id="cachorro" placeholder="Fala do cachorro">
+<label>🐱 Fala do gato</label>
+<input id="gato" placeholder="Digite aqui">
+
+<label>🐶 Fala do cachorro</label>
+<input id="cachorro" placeholder="Digite aqui">
 
 </div>
 
@@ -106,30 +103,15 @@ textarea {
 <script>
 
 let estilo = "normal";
-let quemComeca = "gato";
 let cena = null;
 
-function setQuem(q) {
-  quemComeca = q;
-
-  document.getElementById("btnGato").classList.remove("active");
-  document.getElementById("btnCachorro").classList.remove("active");
-
-  if(q === "gato"){
-    document.getElementById("btnGato").classList.add("active");
-  } else {
-    document.getElementById("btnCachorro").classList.add("active");
-  }
-}
-
-function setEstilo(e){
-  estilo = e;
-}
+function setEstilo(e){ estilo = e; }
 
 function gerar(){
 
   let gato = document.getElementById("gato").value;
   let cachorro = document.getElementById("cachorro").value;
+  let quem = document.getElementById("quem").value;
 
   if(!gato || !cachorro){
     alert("Preencha as falas");
@@ -138,7 +120,7 @@ function gerar(){
 
   let first, second;
 
-  if(quemComeca === "gato"){
+  if(quem === "gato"){
     first = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
     second = { id:"character_RIGHT", voice:"Achird", line:cachorro };
   } else {
@@ -147,35 +129,15 @@ function gerar(){
   }
 
   cena = {
-    veo_model: "VEO_LITE",
     style: estilo,
-
     camera: { duration_seconds: 8 },
-
     characters: [
       { id:"character_LEFT", voice_id:"Rasalgethi" },
       { id:"character_RIGHT", voice_id:"Achird" }
     ],
-
     sequence: [
-      {
-        timestamp:"0s-3.5s",
-        character:first.id,
-        voice:first.voice,
-        action:"speaks",
-        line:first.line
-      },
-      {
-        timestamp:"3.5s-6.5s",
-        character:second.id,
-        voice:second.voice,
-        action:"speaks",
-        line:second.line
-      },
-      {
-        timestamp:"6.5s-8s",
-        action:"both_react_naturally"
-      }
+      { timestamp:"0-3", character:first.id, line:first.line },
+      { timestamp:"3-6", character:second.id, line:second.line }
     ]
   };
 
@@ -191,29 +153,17 @@ function extender(){
 
   let dur = cena.camera.duration_seconds;
 
-  let ultima = cena.sequence.filter(s => s.character).slice(-1)[0];
+  let ultima = cena.sequence[cena.sequence.length-1];
 
   let proximo = ultima.character === "character_LEFT"
     ? "character_RIGHT"
     : "character_LEFT";
 
-  let voz = proximo === "character_LEFT"
-    ? "Rasalgethi"
-    : "Achird";
-
-  cena.sequence.push(
-    {
-      timestamp: `${dur}s-${dur+4}s`,
-      character: proximo,
-      voice: voz,
-      action:"speaks",
-      line:"continua a conversa..."
-    },
-    {
-      timestamp: `${dur+4}s-${dur+8}s`,
-      action:"both_react_naturally"
-    }
-  );
+  cena.sequence.push({
+    timestamp: dur + "-" + (dur+4),
+    character: proximo,
+    line: "continua..."
+  });
 
   cena.camera.duration_seconds += 8;
 
