@@ -126,6 +126,7 @@ button:not(.ativo):hover { opacity: 0.9; }
 .gerar-txt { background: #7c3aed; }
 .extender  { background: #059669; opacity: 1; border: 2px solid #34d399; }
 .extender:hover { opacity: 0.9; }
+.quem-btn  { background: #1e3a5f; }
 .copiar    { background: #1e293b; }
 .download  { background: #0e7490; }
 .limpar    { background: #334155; }
@@ -201,24 +202,23 @@ textarea#saida {
 
 <!-- FALAS -->
 <div class="box">
-  <h3>Falas</h3>
+  <h3>Quem começa falando?</h3>
+  <div class="btn-group" id="grupo-quem">
+    <button class="quem-btn ativo" onclick="setQuem('gato', this)">Gato (LEFT)</button>
+    <button class="quem-btn"       onclick="setQuem('cachorro', this)">Cachorro (RIGHT)</button>
+  </div>
 
   <label class="campo-label">
-    Gato (voz Rasalgethi)
-    <span id="count-gato" class="contador">0 / 200</span>
+    🎙️ Fala 1
+    <span id="count-fala1" class="contador">0 / 200</span>
   </label>
-  <textarea class="entrada" id="gato" maxlength="200" placeholder="Digite a fala do gato..."></textarea>
+  <textarea class="entrada" id="fala1" maxlength="200" placeholder="Fala 1..."></textarea>
 
   <label class="campo-label">
-    Cachorro (voz Achird)
-    <span id="count-cachorro" class="contador">0 / 200</span>
+    🎙️ Fala 2
+    <span id="count-fala2" class="contador">0 / 200</span>
   </label>
-  <textarea class="entrada" id="cachorro" maxlength="200" placeholder="Digite a fala do cachorro..."></textarea>
-
-  <select id="quem">
-    <option value="gato">Gato começa</option>
-    <option value="cachorro">Cachorro começa</option>
-  </select>
+  <textarea class="entrada" id="fala2" maxlength="200" placeholder="Fala 2..."></textarea>
 </div>
 
 <!-- ESTILO -->
@@ -290,10 +290,11 @@ textarea#saida {
 let estiloAtual   = "normal";
 let extensaoAtual = 8;
 let modeloAtual   = "lite";
+let quemComeca    = "gato";
 
 // ── Memória do sistema ────────────────────────────────────────────────────────
-let currentJSON   = null;   // último JSON gerado (objeto JS)
-let ultimoSpeaker = null;   // label do último personagem que falou
+let currentJSON   = null;
+let ultimoSpeaker = null;
 
 const TONS = {
   normal:    { gato: "calm natural",       cachorro: "calm natural"       },
@@ -316,8 +317,8 @@ function setupContador(idCampo, idContador) {
   });
 }
 
-setupContador("gato",     "count-gato");
-setupContador("cachorro", "count-cachorro");
+setupContador("fala1", "count-fala1");
+setupContador("fala2", "count-fala2");
 
 document.getElementById("ext-linha").addEventListener("input", () => {
   const len = document.getElementById("ext-linha").value.length;
@@ -326,6 +327,13 @@ document.getElementById("ext-linha").addEventListener("input", () => {
 });
 
 // ── Estado ────────────────────────────────────────────────────────────────────
+
+function setQuem(quem, btn) {
+  quemComeca = quem;
+  document.querySelectorAll("#grupo-quem button").forEach(b => b.classList.remove("ativo"));
+  btn.classList.add("ativo");
+  salvarStorage();
+}
 
 function setEstilo(estilo, btn) {
   estiloAtual = estilo;
@@ -352,39 +360,42 @@ function setModelo(modelo, btn) {
 // ── localStorage ──────────────────────────────────────────────────────────────
 
 function salvarStorage() {
-  localStorage.setItem("veo3_gato",     document.getElementById("gato").value);
-  localStorage.setItem("veo3_cachorro", document.getElementById("cachorro").value);
-  localStorage.setItem("veo3_quem",     document.getElementById("quem").value);
-  localStorage.setItem("veo3_estilo",   estiloAtual);
-  localStorage.setItem("veo3_extensao", extensaoAtual);
-  localStorage.setItem("veo3_modelo",   modeloAtual);
+  localStorage.setItem("veo3_fala1",   document.getElementById("fala1").value);
+  localStorage.setItem("veo3_fala2",   document.getElementById("fala2").value);
+  localStorage.setItem("veo3_quem",    quemComeca);
+  localStorage.setItem("veo3_estilo",  estiloAtual);
+  localStorage.setItem("veo3_extensao",extensaoAtual);
+  localStorage.setItem("veo3_modelo",  modeloAtual);
 }
 
 function restaurarStorage() {
-  const gato     = localStorage.getItem("veo3_gato");
-  const cachorro = localStorage.getItem("veo3_cachorro");
-  const quem     = localStorage.getItem("veo3_quem");
-  const estilo   = localStorage.getItem("veo3_estilo");
-  const extensao = localStorage.getItem("veo3_extensao");
-  const modelo   = localStorage.getItem("veo3_modelo");
+  const fala1   = localStorage.getItem("veo3_fala1");
+  const fala2   = localStorage.getItem("veo3_fala2");
+  const quem    = localStorage.getItem("veo3_quem");
+  const estilo  = localStorage.getItem("veo3_estilo");
+  const extensao= localStorage.getItem("veo3_extensao");
+  const modelo  = localStorage.getItem("veo3_modelo");
 
-  if (gato) {
-    document.getElementById("gato").value = gato;
-    document.getElementById("count-gato").textContent = `${gato.length} / 200`;
+  if (fala1) {
+    document.getElementById("fala1").value = fala1;
+    document.getElementById("count-fala1").textContent = `${fala1.length} / 200`;
   }
-  if (cachorro) {
-    document.getElementById("cachorro").value = cachorro;
-    document.getElementById("count-cachorro").textContent = `${cachorro.length} / 200`;
+  if (fala2) {
+    document.getElementById("fala2").value = fala2;
+    document.getElementById("count-fala2").textContent = `${fala2.length} / 200`;
   }
-  if (quem) document.getElementById("quem").value = quem;
-
+  if (quem) {
+    quemComeca = quem;
+    document.querySelectorAll("#grupo-quem button").forEach(b =>
+      b.classList.toggle("ativo", b.textContent.toLowerCase().startsWith(quem))
+    );
+  }
   if (estilo) {
     estiloAtual = estilo;
     document.querySelectorAll("#grupo-estilo button").forEach(b =>
       b.classList.toggle("ativo", [...b.classList].includes(estilo))
     );
   }
-
   if (extensao) {
     extensaoAtual = extensao === "livre" ? "livre" : parseInt(extensao, 10);
     document.querySelectorAll("#grupo-extensao button").forEach(b => {
@@ -395,7 +406,6 @@ function restaurarStorage() {
     });
     if (extensao === "livre") document.getElementById("custom-dur").classList.add("visivel");
   }
-
   if (modelo) {
     modeloAtual = modelo;
     document.querySelectorAll("#grupo-modelo button").forEach(b =>
@@ -405,7 +415,6 @@ function restaurarStorage() {
 }
 
 restaurarStorage();
-document.getElementById("quem").addEventListener("change", salvarStorage);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -466,19 +475,21 @@ function atualizarPainelExtensao() {
 // ── Gerar JSON ────────────────────────────────────────────────────────────────
 
 function gerar() {
-  const gatoVal     = document.getElementById("gato").value.trim();
-  const cachorroVal = document.getElementById("cachorro").value.trim();
-  const quem        = document.getElementById("quem").value;
+  const fala1Val = document.getElementById("fala1").value.trim();
+  const fala2Val = document.getElementById("fala2").value.trim();
 
-  if (!gatoVal || !cachorroVal) { alert("Preencha as falas do gato e do cachorro!"); return; }
+  if (!fala1Val || !fala2Val) { alert("Preencha as duas falas!"); return; }
+
+  const gatoVal     = quemComeca === "gato" ? fala1Val : fala2Val;
+  const cachorroVal = quemComeca === "gato" ? fala2Val : fala1Val;
 
   const tom        = TONS[estiloAtual];
   const totalSecs  = getTotalSecs();
-  const p          = resolvePersonagens(quem);
-  const firstLine  = quem === "gato" ? gatoVal     : cachorroVal;
-  const secondLine = quem === "gato" ? cachorroVal : gatoVal;
-  const firstTone  = quem === "gato" ? tom.gato    : tom.cachorro;
-  const secondTone = quem === "gato" ? tom.cachorro : tom.gato;
+  const p          = resolvePersonagens(quemComeca);
+  const firstLine  = fala1Val;
+  const secondLine = fala2Val;
+  const firstTone  = quemComeca === "gato" ? tom.gato    : tom.cachorro;
+  const secondTone = quemComeca === "gato" ? tom.cachorro : tom.gato;
 
   // Bloco inicial (0s-8s) — sequência contínua
   const sequence = [
@@ -655,20 +666,19 @@ function renderizar() {
 // ── Gerar Texto Livre ─────────────────────────────────────────────────────────
 
 function gerarTextoLivre() {
-  const gatoVal     = document.getElementById("gato").value.trim();
-  const cachorroVal = document.getElementById("cachorro").value.trim();
-  const quem        = document.getElementById("quem").value;
+  const fala1Val = document.getElementById("fala1").value.trim();
+  const fala2Val = document.getElementById("fala2").value.trim();
 
-  if (!gatoVal || !cachorroVal) { alert("Preencha as falas do gato e do cachorro!"); return; }
+  if (!fala1Val || !fala2Val) { alert("Preencha as duas falas!"); return; }
 
   const tom          = TONS[estiloAtual];
-  const p            = resolvePersonagens(quem);
-  const nomePrimeiro = quem === "gato" ? "Gato (Rasalgethi, esquerda)" : "Cachorro (Achird, direita)";
-  const nomeSegundo  = quem === "gato" ? "Cachorro (Achird, direita)"  : "Gato (Rasalgethi, esquerda)";
-  const primeiraFala = quem === "gato" ? gatoVal     : cachorroVal;
-  const segundaFala  = quem === "gato" ? cachorroVal : gatoVal;
-  const primeiroTom  = quem === "gato" ? tom.gato    : tom.cachorro;
-  const segundoTom   = quem === "gato" ? tom.cachorro : tom.gato;
+  const p            = resolvePersonagens(quemComeca);
+  const nomePrimeiro = quemComeca === "gato" ? "Gato (Rasalgethi, esquerda)" : "Cachorro (Achird, direita)";
+  const nomeSegundo  = quemComeca === "gato" ? "Cachorro (Achird, direita)"  : "Gato (Rasalgethi, esquerda)";
+  const primeiraFala = fala1Val;
+  const segundaFala  = fala2Val;
+  const primeiroTom  = quemComeca === "gato" ? tom.gato    : tom.cachorro;
+  const segundoTom   = quemComeca === "gato" ? tom.cachorro : tom.gato;
   const estiloLabel  = { normal: "Normal", engracado: "Engraçado", treta: "Treta", viral: "Viral" }[estiloAtual];
 
   const texto =
@@ -743,19 +753,19 @@ function baixar() {
 // ── Limpar ────────────────────────────────────────────────────────────────────
 
 function limpar() {
-  document.getElementById("gato").value                 = "";
-  document.getElementById("cachorro").value             = "";
-  document.getElementById("saida").value                = "";
-  document.getElementById("ext-linha").value            = "";
-  document.getElementById("status").textContent         = "";
-  document.getElementById("count-gato").textContent     = "0 / 200";
-  document.getElementById("count-cachorro").textContent = "0 / 200";
-  document.getElementById("count-ext").textContent      = "0 / 200";
-  document.getElementById("secao-ext").style.display    = "none";
+  document.getElementById("fala1").value              = "";
+  document.getElementById("fala2").value              = "";
+  document.getElementById("saida").value              = "";
+  document.getElementById("ext-linha").value          = "";
+  document.getElementById("status").textContent       = "";
+  document.getElementById("count-fala1").textContent  = "0 / 200";
+  document.getElementById("count-fala2").textContent  = "0 / 200";
+  document.getElementById("count-ext").textContent    = "0 / 200";
+  document.getElementById("secao-ext").style.display  = "none";
   currentJSON   = null;
   ultimoSpeaker = null;
-  localStorage.removeItem("veo3_gato");
-  localStorage.removeItem("veo3_cachorro");
+  localStorage.removeItem("veo3_fala1");
+  localStorage.removeItem("veo3_fala2");
 }
 
 </script>
