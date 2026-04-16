@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Gerador JSON VEO3</title>
+<title>Gerador de Prompt PRO</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -85,6 +85,34 @@ button:not(.ativo):hover { opacity: 0.9; }
 .fast     { background: #ef4444; }
 .copiar   { background: #1e293b; }
 .limpar   { background: #334155; }
+.continuar{ background: #8b5cf6; }
+
+.toggle-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.toggle-box input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #8b5cf6;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.toggle-box span {
+  font-size: 13px;
+  font-weight: bold;
+  color: #c4b5fd;
+}
 
 textarea {
   width: 100%;
@@ -143,6 +171,16 @@ textarea {
 </div>
 
 <div class="box">
+  <label class="toggle-box" for="continuarCena">
+    <input type="checkbox" id="continuarCena">
+    <span>Continuar cena automaticamente (+8s)</span>
+  </label>
+  <div class="btn-group" style="margin-top:10px">
+    <button class="continuar" onclick="gerarComContinuacao()">🟣 Gerar com continuação</button>
+  </div>
+</div>
+
+<div class="box">
   <div class="btn-group">
     <button class="copiar" onclick="copiar()">Copiar JSON</button>
     <button class="limpar" onclick="limpar()">Limpar</button>
@@ -174,24 +212,8 @@ function setEstilo(estilo, btn) {
   btn.classList.add("ativo");
 }
 
-function gerar(modelo) {
-
-  const gato     = document.getElementById("gato").value.trim();
-  const cachorro = document.getElementById("cachorro").value.trim();
-  const quem     = document.getElementById("quem").value;
-
-  if (!gato || !cachorro) {
-    alert("Preencha as falas do gato e do cachorro!");
-    return;
-  }
-
-  const tom = TONS[estiloAtual];
-
-  const seq = quem === "gato"
-    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro)
-    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato);
-
-  const json = {
+function buildSceneBase(modelo) {
+  return {
     veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
     style: estiloAtual,
     scene: {
@@ -206,8 +228,7 @@ function gerar(modelo) {
       cuts: false,
       zoom: false,
       pan: false,
-      movement: false,
-      duration_seconds: 8
+      movement: false
     },
     characters: [
       {
@@ -242,16 +263,87 @@ function gerar(modelo) {
       add_scene_elements: false,
       modify_appearance: false,
       modify_set: false
-    },
-    sequence: seq
+    }
   };
-
-  document.getElementById("saida").value = JSON.stringify(json, null, 2);
-  document.getElementById("status").textContent = "JSON gerado. Pronto para copiar.";
 }
 
-function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
+function gerar(modelo) {
 
+  const gato     = document.getElementById("gato").value.trim();
+  const cachorro = document.getElementById("cachorro").value.trim();
+  const quem     = document.getElementById("quem").value;
+  const continuar = document.getElementById("continuarCena").checked;
+
+  if (!gato || !cachorro) {
+    alert("Preencha as falas do gato e do cachorro!");
+    return;
+  }
+
+  const tom = TONS[estiloAtual];
+
+  const seq1 = quem === "gato"
+    ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro, 0)
+    : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato, 0);
+
+  let json;
+
+  if (!continuar) {
+    json = {
+      ...buildSceneBase(modelo),
+      camera: { ...buildSceneBase(modelo).camera, duration_seconds: 8 },
+      sequence: seq1
+    };
+  } else {
+    const seq2 = quem === "gato"
+      ? buildSeq("cat", gato, tom.gato, "dog", cachorro, tom.cachorro, 8)
+      : buildSeq("dog", cachorro, tom.cachorro, "cat", gato, tom.gato, 8);
+
+    const base = buildSceneBase(modelo);
+    json = {
+      ...base,
+      camera: { ...base.camera, duration_seconds: 16 },
+      continuation_rules: {
+        no_restart: true,
+        same_characters: true,
+        same_set: true,
+        same_camera: true,
+        action_evolves: true
+      },
+      scenes: [
+        {
+          scene_id: "S1",
+          time_range: "0s-8s",
+          duration: "8s",
+          description: "início da conversa",
+          sequence: seq1
+        },
+        {
+          scene_id: "S2",
+          time_range: "8s-16s",
+          duration: "8s",
+          description: "continuação direta da cena anterior — sem corte, sem reinício",
+          continuation: true,
+          sequence: seq2
+        }
+      ]
+    };
+  }
+
+  document.getElementById("saida").value = JSON.stringify(json, null, 2);
+  document.getElementById("status").textContent = continuar
+    ? "JSON com continuação gerado (16s — 2 cenas)."
+    : "JSON gerado. Pronto para copiar.";
+}
+
+function gerarComContinuacao() {
+  document.getElementById("continuarCena").checked = true;
+  const modelo = "lite";
+  gerar(modelo);
+}
+
+function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, offset) {
+
+  const o = offset || 0;
   const voiceFirst  = first === "cat" ? "Rasalgethi" : "Achird";
   const voiceSecond = second === "cat" ? "Rasalgethi" : "Achird";
   const posFirst    = first === "cat" ? "LEFT" : "RIGHT";
@@ -261,7 +353,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
 
   return [
     {
-      timestamp: "0s-3s",
+      timestamp: `${o}s-${o+3}s`,
       character: labelFirst,
       position: posFirst,
       voice: voiceFirst,
@@ -272,7 +364,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
       other_character: "watches silently, no mouth movement"
     },
     {
-      timestamp: "3s-4s",
+      timestamp: `${o+3}s-${o+4}s`,
       character: labelSecond,
       position: posSecond,
       action: "watches_silently",
@@ -280,7 +372,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
       expression: "listening attentive"
     },
     {
-      timestamp: "4s-6s",
+      timestamp: `${o+4}s-${o+6}s`,
       character: labelSecond,
       position: posSecond,
       voice: voiceSecond,
@@ -291,7 +383,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone) {
       other_character: "watches silently, no mouth movement"
     },
     {
-      timestamp: "6s-8s",
+      timestamp: `${o+6}s-${o+8}s`,
       action: "both_react_naturally",
       characters: [labelFirst, labelSecond],
       movement: "subtle natural reaction",
@@ -315,6 +407,7 @@ function limpar() {
   document.getElementById("cachorro").value = "";
   document.getElementById("saida").value = "";
   document.getElementById("status").textContent = "";
+  document.getElementById("continuarCena").checked = false;
 }
 
 </script>
