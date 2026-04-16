@@ -2,164 +2,206 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Gerador VEO Simples</title>
+<title>Gerador de Prompt PRO</title>
 
 <style>
 body {
   font-family: Arial;
-  background: #020617;
+  background: linear-gradient(135deg,#0f172a,#020617);
   color: white;
   padding: 20px;
-  max-width: 600px;
+  max-width: 700px;
   margin: auto;
 }
 
-.box {
-  background: #0f172a;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 15px;
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+label {
+  margin-top: 15px;
+  display: block;
 }
 
 input, select {
   width: 100%;
   padding: 12px;
-  margin-top: 10px;
   border-radius: 10px;
   border: none;
+  margin-top: 5px;
   background: #1e293b;
   color: white;
 }
 
+textarea {
+  width: 100%;
+  height: 320px;
+  margin-top: 20px;
+  border-radius: 12px;
+  border: none;
+  padding: 15px;
+  background: #020617;
+  color: #22c55e;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 button {
   width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  border-radius: 10px;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 12px;
   border: none;
+  background: #22c55e;
+  color: white;
   font-weight: bold;
   cursor: pointer;
 }
 
-.normal { background:#3b82f6; }
-.engracado { background:#f59e0b; }
-.treta { background:#ef4444; }
-.viral { background:#8b5cf6; }
-.lite { background:#22c55e; }
-.extend { background:#06b6d4; }
-
-textarea {
-  width: 100%;
-  height: 260px;
-  margin-top: 15px;
-  border-radius: 10px;
-  padding: 10px;
-  background: #020617;
-  color: #22c55e;
+button:hover {
+  background: #16a34a;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🐱🐶 Gerador Simples</h2>
+<h2>🐱🐶 Gerador de Prompt PRO</h2>
 
-<div class="box">
+<label>Fala do Gato:</label>
+<input id="gato" placeholder="Digite a fala do gato">
+
+<label>Fala do Cachorro:</label>
+<input id="cachorro" placeholder="Digite a fala do cachorro">
+
+<label>Quem começa:</label>
 <select id="quem">
-  <option value="gato">🐱 Gato começa</option>
-  <option value="cachorro">🐶 Cachorro começa</option>
+  <option value="gato">Gato</option>
+  <option value="cachorro">Cachorro</option>
 </select>
 
-<input id="gato" placeholder="Fala do gato">
-<input id="cachorro" placeholder="Fala do cachorro">
-</div>
+<!-- BOTÕES CORRETOS -->
+<button onclick="gerar('lite')">🟢 VEO LITE (estável)</button>
+<button onclick="gerar('fast')">🔴 VEO FAST (rápido)</button>
 
-<div class="box">
-<button class="normal" onclick="setEstilo('normal')">Normal</button>
-<button class="engracado" onclick="setEstilo('engracado')">Engraçado</button>
-<button class="treta" onclick="setEstilo('treta')">Treta</button>
-<button class="viral" onclick="setEstilo('viral')">Viral</button>
-</div>
-
-<div class="box">
-<button class="lite" onclick="gerar()">Gerar JSON</button>
-<button class="extend" onclick="extender()">Extender Cena</button>
-</div>
+<button onclick="copiar()">Copiar Prompt</button>
+<button onclick="limpar()">Limpar</button>
 
 <textarea id="saida"></textarea>
 
 <script>
+function gerar(modelo) {
 
-let estilo = "normal";
-let cena = null;
-
-function setEstilo(e) {
-  estilo = e;
-}
-
-function gerar() {
-
-  let gato = document.getElementById("gato").value;
-  let cachorro = document.getElementById("cachorro").value;
-  let quem = document.getElementById("quem").value;
+  const gato = document.getElementById("gato").value.trim();
+  const cachorro = document.getElementById("cachorro").value.trim();
+  const quem = document.getElementById("quem").value;
 
   if (!gato || !cachorro) {
-    alert("Preencha as falas");
+    alert("Preencha as falas!");
     return;
   }
 
-  let first, second;
+  let sequencia = "";
 
   if (quem === "gato") {
-    first = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
-    second = { id:"character_RIGHT", voice:"Achird", line:cachorro };
+    sequencia = `
+[0s - 3s]
+O GATO da esquerda fala:
+"${gato}"
+
+[3s - 4s]
+O cachorro observa o gato.
+
+[4s - 6s]
+O CACHORRO da direita responde:
+"${cachorro}"
+`;
   } else {
-    first = { id:"character_RIGHT", voice:"Achird", line:cachorro };
-    second = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
+    sequencia = `
+[0s - 3s]
+O CACHORRO da direita fala:
+"${cachorro}"
+
+[3s - 4s]
+O gato observa o cachorro.
+
+[4s - 6s]
+O GATO da esquerda responde:
+"${gato}"
+`;
   }
 
-  cena = {
-    style: estilo,
-    camera: { duration_seconds: 8 },
-    sequence: [
-      { timestamp:"0-3", character:first.id, line:first.line },
-      { timestamp:"3-6", character:second.id, line:second.line }
-    ]
-  };
+  let prompt = "";
 
-  render();
-}
+  // 🟢 LITE (ESTÁVEL)
+  if (modelo === "lite") {
+    prompt = `
+Cena: podcast em estúdio moderno, iluminação quente, fundo desfocado.
 
-function extender() {
+CÂMERA:
+Plano fixo médio.
+Sem cortes.
+Sem zoom.
 
-  if (!cena) {
-    alert("Gere primeiro");
-    return;
+POSIÇÃO FIXA:
+À esquerda: GATO CINZA realista.
+À direita: CACHORRO CARAMELO realista.
+
+APARÊNCIA:
+Sem roupas.
+Sem acessórios.
+Sem humanização.
+
+VOZES:
+Gato → Rasalgethi
+Cachorro → Achird
+
+REGRAS:
+- Não inverter personagens
+- Não inverter falas
+- Quem fala move a boca
+- Um fala por vez
+
+SEQUÊNCIA:
+${sequencia}
+
+[6s - 8s]
+Ambos reagem naturalmente.
+`;
   }
 
-  let dur = cena.camera.duration_seconds;
-  let ultimo = cena.sequence[cena.sequence.length-1];
+  // 🔴 FAST (RÁPIDO)
+  if (modelo === "fast") {
+    prompt = `
+Cena dinâmica de podcast.
 
-  let proximo = ultimo.character === "character_LEFT"
-    ? "character_RIGHT"
-    : "character_LEFT";
+Gato fala:
+"${gato}"
 
-  cena.sequence.push({
-    timestamp: dur + "-" + (dur+4),
-    character: proximo,
-    line: "continua..."
-  });
+Cachorro responde:
+"${cachorro}"
 
-  cena.camera.duration_seconds += 8;
+Reação leve no final.
+`;
+  }
 
-  render();
+  document.getElementById("saida").value = prompt.trim();
 }
 
-function render() {
-  document.getElementById("saida").value =
-    JSON.stringify(cena, null, 2);
+function copiar() {
+  const texto = document.getElementById("saida");
+  texto.select();
+  document.execCommand("copy");
+  alert("Copiado!");
 }
 
+function limpar() {
+  document.getElementById("gato").value = "";
+  document.getElementById("cachorro").value = "";
+  document.getElementById("saida").value = "";
+}
 </script>
 
 </body>
