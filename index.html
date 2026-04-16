@@ -1,166 +1,135 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Gerador VEO Simples</title>
+Você vai REESCREVER o arquivo HTML inteiro.
 
-<style>
-body {
-  font-family: Arial;
-  background: #020617;
-  color: white;
-  padding: 20px;
-  max-width: 600px;
-  margin: auto;
+⚠️ IMPORTANTE:
+
+* NÃO explicar nada
+* NÃO dividir em partes
+* NÃO comentar
+* ENTREGAR O ARQUIVO COMPLETO PRONTO
+
+---
+
+# 🎯 OBJETIVO
+
+Criar um gerador simples, bonito e funcional para prompts VEO.
+
+---
+
+# 🧠 REGRAS DE UX (OBRIGATÓRIO)
+
+1. NÃO usar dropdown para "quem começa"
+2. Usar botões grandes:
+
+[ 🐱 Gato ]   [ 🐶 Cachorro ]
+
+3. Destacar o botão ativo (opacidade ou cor)
+
+---
+
+# 🧠 CAMPOS
+
+Criar:
+
+🐱 Fala do gato
+🐶 Fala do cachorro
+
+---
+
+# 🎭 ESTILO
+
+Botões:
+
+* Normal (azul)
+* Engraçado (laranja)
+* Treta (vermelho)
+* Viral (roxo)
+
+---
+
+# ⚙️ BOTÕES
+
+* Gerar JSON
+* Extender Cena (+8s)
+
+---
+
+# 🧠 LÓGICA
+
+Criar variável global:
+
+let currentJSON = null;
+let quemComeca = "gato";
+
+---
+
+# 🎬 GERAR JSON
+
+Estrutura:
+
+{
+veo_model: "VEO_LITE",
+style: estiloSelecionado,
+camera: { duration_seconds: 8 },
+characters: [
+{ id:"character_LEFT", voice_id:"Rasalgethi" },
+{ id:"character_RIGHT", voice_id:"Achird" }
+],
+sequence: [...]
 }
 
-.box {
-  background: #0f172a;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 15px;
-}
+---
 
-input, select {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: none;
-  background: #1e293b;
-  color: white;
-}
+# 🎙️ DIÁLOGO
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  border-radius: 10px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
+Se gato começa:
 
-.normal { background:#3b82f6; }
-.engracado { background:#f59e0b; }
-.treta { background:#ef4444; }
-.viral { background:#8b5cf6; }
-.lite { background:#22c55e; }
-.extend { background:#06b6d4; }
+* fala 1 → LEFT
+* fala 2 → RIGHT
 
-textarea {
-  width: 100%;
-  height: 260px;
-  margin-top: 15px;
-  border-radius: 10px;
-  padding: 10px;
-  background: #020617;
-  color: #22c55e;
-}
-</style>
-</head>
+Se cachorro começa:
 
-<body>
+* fala 1 → RIGHT
+* fala 2 → LEFT
 
-<h2>🐱🐶 Gerador Simples</h2>
+---
 
-<div class="box">
-<select id="quem">
-  <option value="gato">🐱 Gato começa</option>
-  <option value="cachorro">🐶 Cachorro começa</option>
-</select>
+# 🔁 EXTENDER CENA
 
-<input id="gato" placeholder="Fala do gato">
-<input id="cachorro" placeholder="Fala do cachorro">
-</div>
+Criar botão:
 
-<div class="box">
-<button class="normal" onclick="setEstilo('normal')">Normal</button>
-<button class="engracado" onclick="setEstilo('engracado')">Engraçado</button>
-<button class="treta" onclick="setEstilo('treta')">Treta</button>
-<button class="viral" onclick="setEstilo('viral')">Viral</button>
-</div>
+Extender Cena (+8s)
 
-<div class="box">
-<button class="lite" onclick="gerar()">Gerar JSON</button>
-<button class="extend" onclick="extender()">Extender Cena</button>
-</div>
+Função deve:
 
-<textarea id="saida"></textarea>
+* usar currentJSON
+* NÃO recriar JSON
+* adicionar nova fala alternando personagem
+* somar +8 segundos
 
-<script>
+---
 
-let estilo = "normal";
-let cena = null;
+# 🎨 DESIGN
 
-function setEstilo(e) {
-  estilo = e;
-}
+* fundo escuro (#020617)
+* caixas (#0f172a)
+* inputs (#1e293b)
+* texto branco
+* textarea verde (#22c55e)
 
-function gerar() {
+---
 
-  let gato = document.getElementById("gato").value;
-  let cachorro = document.getElementById("cachorro").value;
-  let quem = document.getElementById("quem").value;
+# 🎯 RESULTADO FINAL
 
-  if (!gato || !cachorro) {
-    alert("Preencha as falas");
-    return;
-  }
+Sistema simples, bonito e funcional:
 
-  let first, second;
+* sem dropdown
+* sem duplicação
+* com extensão funcionando
 
-  if (quem === "gato") {
-    first = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
-    second = { id:"character_RIGHT", voice:"Achird", line:cachorro };
-  } else {
-    first = { id:"character_RIGHT", voice:"Achird", line:cachorro };
-    second = { id:"character_LEFT", voice:"Rasalgethi", line:gato };
-  }
+---
 
-  cena = {
-    style: estilo,
-    camera: { duration_seconds: 8 },
-    sequence: [
-      { timestamp:"0-3", character:first.id, line:first.line },
-      { timestamp:"3-6", character:second.id, line:second.line }
-    ]
-  };
+# ⚠️ REGRA FINAL
 
-  render();
-}
+Entregar HTML COMPLETO funcionando.
 
-function extender() {
-
-  if (!cena) {
-    alert("Gere primeiro");
-    return;
-  }
-
-  let dur = cena.camera.duration_seconds;
-  let ultimo = cena.sequence[cena.sequence.length-1];
-
-  let proximo = ultimo.character === "character_LEFT"
-    ? "character_RIGHT"
-    : "character_LEFT";
-
-  cena.sequence.push({
-    timestamp: dur + "-" + (dur+4),
-    character: proximo,
-    line: "continua..."
-  });
-
-  cena.camera.duration_seconds += 8;
-
-  render();
-}
-
-function render() {
-  document.getElementById("saida").value =
-    JSON.stringify(cena, null, 2);
-}
-
-</script>
-
-</body>
-</html>
+Nada além disso.
