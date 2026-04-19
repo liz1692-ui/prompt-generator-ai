@@ -242,7 +242,7 @@ function buildSceneBase(modelo) {
         id: "character_LEFT",
         position: "LEFT",
         species: "realistic gray cat",
-        appearance: "real animal anatomy, sitting upright at desk",
+        appearance: "real animal anatomy, sitting upright at desk, same character, identical face, identical fur, no variation",
         clothes: false,
         accessories: false,
         humanization: false,
@@ -253,7 +253,7 @@ function buildSceneBase(modelo) {
         id: "character_RIGHT",
         position: "RIGHT",
         species: "realistic caramel dog",
-        appearance: "real animal anatomy, sitting upright at desk",
+        appearance: "real animal anatomy, sitting upright at desk, same character, identical face, identical fur, no variation",
         clothes: false,
         accessories: false,
         humanization: false,
@@ -269,7 +269,8 @@ function buildSceneBase(modelo) {
       simultaneous_speech: false,
       add_scene_elements: false,
       modify_appearance: false,
-      modify_set: false
+      modify_set: false,
+      DO_NOT_CHANGE_CHARACTER_APPEARANCE: true
     }
   };
 }
@@ -362,9 +363,57 @@ function gerarComContinuacao() {
 
 const VOICE_MAP = { cat: "Rasalgethi", dog: "Achird" };
 
+const FACIAL = {
+  normal: {
+    speak_first:  "confident natural expression",
+    speak_second: "engaged nodding",
+    pause:        "curious attentive tilt",
+    final_action: "both_smile_naturally",
+    final_expr:   "warm natural smile",
+    final_mouth:  "closed relaxed smile"
+  },
+  engracado: {
+    speak_first:  "smirk, barely holding laugh",
+    speak_second: "confused blinking",
+    pause:        "holding back laughter",
+    final_action: "both_laugh_hard",
+    final_expr:   "uncontrolled laughter",
+    final_mouth:  "wide open laugh",
+    final_sound:  "loud natural laughter"
+  },
+  treta: {
+    speak_first:  "provocative intense stare",
+    speak_second: "irritated tense glare",
+    pause:        "tense silence, narrowed eyes",
+    final_action: "both_stare_intensely",
+    final_expr:   "intense confrontational stare",
+    final_mouth:  "tight lipped tense"
+  },
+  viral: {
+    speak_first:  "excited wide eyes, dramatic",
+    speak_second: "shocked disbelief expression",
+    pause:        "dramatic pause, eyes wide",
+    final_action: "both_react_wildly",
+    final_expr:   "shocked excited expression",
+    final_mouth:  "wide open gasp"
+  }
+};
+
 function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, offset) {
 
   const o = offset || 0;
+  const f = FACIAL[estiloAtual] || FACIAL.normal;
+
+  const finalBlock = {
+    timestamp: `${o+6}s-${o+8}s`,
+    speaker: null,
+    action: f.final_action,
+    characters: [first, second],
+    facial_expression: f.final_expr,
+    mouth_movement: f.final_mouth,
+    lip_sync: false
+  };
+  if (f.final_sound) finalBlock.sound = f.final_sound;
 
   return [
     {
@@ -375,6 +424,8 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, o
       tone: firstTone,
       line: firstLine,
       lip_sync: true,
+      mouth_movement: "clear speaking motion",
+      facial_expression: f.speak_first,
       listeners: [second],
       listeners_action: "silent, no mouth movement"
     },
@@ -383,6 +434,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, o
       speaker: null,
       action: "pause_reaction",
       characters: [first, second],
+      facial_expression: f.pause,
       lip_sync: false
     },
     {
@@ -393,16 +445,12 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, o
       tone: secondTone,
       line: secondLine,
       lip_sync: true,
+      mouth_movement: "clear speaking motion",
+      facial_expression: f.speak_second,
       listeners: [first],
       listeners_action: "silent, no mouth movement"
     },
-    {
-      timestamp: `${o+6}s-${o+8}s`,
-      speaker: null,
-      action: "both_react_naturally",
-      characters: [first, second],
-      lip_sync: false
-    }
+    finalBlock
   ];
 }
 
@@ -444,7 +492,11 @@ function strictRules() {
     LOCK_VOICE_TO_CHARACTER: true,
     NO_DIALOGUE_SWAP: true,
     NO_VOICE_SWAP: true,
-    NO_ACTION_CONFUSION: true
+    NO_ACTION_CONFUSION: true,
+    FORCE_LIP_SYNC: true,
+    FORCE_MOUTH_MOVEMENT: true,
+    MOUTH_MOVEMENT_STYLE: "clear exaggerated speaking motion",
+    DO_NOT_CHANGE_CHARACTER_APPEARANCE: true
   };
 }
 
