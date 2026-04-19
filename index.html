@@ -431,17 +431,16 @@ async function uploadImage(file) {
     return data.data.url;
   }
 
-  // Sem key: usa catbox.moe (gratuito, sem autenticação)
+  // Sem key: usa freeimage.host com key demo pública (CORS habilitado)
   const formData = new FormData();
-  formData.append("reqtype", "fileupload");
-  formData.append("fileToUpload", file);
-  const res = await fetch("https://catbox.moe/user/api.php", {
+  formData.append("image", file);
+  const res = await fetch("https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5", {
     method: "POST", body: formData
   });
   if (!res.ok) throw new Error("Upload falhou: " + res.status);
-  const url = await res.text();
-  if (!url.startsWith("http")) throw new Error("Upload falhou: resposta inválida");
-  return url.trim();
+  const data = await res.json();
+  if (!data.image?.url) throw new Error("Upload falhou: resposta inválida");
+  return data.image.url;
 }
 
 async function handleImageUpload(input) {
