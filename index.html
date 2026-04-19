@@ -223,12 +223,30 @@ function buildSceneBase(modelo) {
   return {
     veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
     style: estiloAtual,
+    reference: {
+      base_image: "FRAME 1",
+      instruction: "USE FRAME 1 AS ABSOLUTE REFERENCE FOR ALL CHARACTERS",
+      lock_identity: true,
+      lock_face: true,
+      lock_fur_pattern: true,
+      lock_body_structure: true
+    },
+    identity_rules: {
+      STRICT_IDENTITY_LOCK: true,
+      NO_REINTERPRETATION: true,
+      NO_NEW_CHARACTER_VARIATION: true,
+      FACE_CONSISTENCY_PRIORITY: "maximum",
+      IGNORE_STYLE_DRIFT: true
+    },
     scene: {
       type: "podcast_studio",
       lighting: "warm cinematic amber",
-      background: "blurred dark studio bokeh",
       props: ["two microphones", "two black podcast mugs", "desk"],
       realism: "photorealistic"
+    },
+    environment: {
+      background: "blurred dark studio bokeh",
+      rule: "CHANGE BACKGROUND ONLY, KEEP CHARACTERS EXACTLY THE SAME AS FRAME 1"
     },
     camera: {
       shot: "fixed medium shot",
@@ -242,7 +260,7 @@ function buildSceneBase(modelo) {
         id: "character_LEFT",
         position: "LEFT",
         species: "realistic gray cat",
-        appearance: "real animal anatomy, sitting upright at desk, same character, identical face, identical fur, no variation",
+        appearance: "EXACT SAME CHARACTER FROM FRAME 1, identical face, identical fur pattern, identical proportions, DO NOT CHANGE ANY DETAIL",
         clothes: false,
         accessories: false,
         humanization: false,
@@ -253,7 +271,7 @@ function buildSceneBase(modelo) {
         id: "character_RIGHT",
         position: "RIGHT",
         species: "realistic caramel dog",
-        appearance: "real animal anatomy, sitting upright at desk, same character, identical face, identical fur, no variation",
+        appearance: "EXACT SAME CHARACTER FROM FRAME 1, identical face, identical fur pattern, identical proportions, DO NOT CHANGE ANY DETAIL",
         clothes: false,
         accessories: false,
         humanization: false,
@@ -270,7 +288,9 @@ function buildSceneBase(modelo) {
       add_scene_elements: false,
       modify_appearance: false,
       modify_set: false,
-      DO_NOT_CHANGE_CHARACTER_APPEARANCE: true
+      DO_NOT_CHANGE_CHARACTER_APPEARANCE: true,
+      LOCK_CHARACTER_IDENTITY_STRONG: true,
+      CHARACTER_CONSISTENCY_PRIORITY: "maximum"
     }
   };
 }
