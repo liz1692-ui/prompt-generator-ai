@@ -417,6 +417,8 @@ document.getElementById("useImageBase").addEventListener("change", function() {
   document.getElementById("imagePanel").style.display = this.checked ? "block" : "none";
 });
 
+let _localImageDataUrl = null;
+
 async function uploadImage(file) {
   const key = document.getElementById("imgbbKey").value.trim();
   const formData = new FormData();
@@ -436,15 +438,19 @@ async function handleImageUpload(input) {
   const urlField = document.getElementById("imageUrl");
   const preview  = document.getElementById("imgPreview");
 
-  // Preview local imediato (sem CORS, sem upload)
-  const localUrl = URL.createObjectURL(file);
-  preview.src = localUrl;
+  // Converte para base64 e armazena como fallback
+  _localImageDataUrl = await new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+  preview.src = _localImageDataUrl;
   preview.style.display = "block";
 
   const customKey = document.getElementById("imgbbKey").value.trim();
   if (!customKey) {
     status.style.color = "#f59e0b";
-    status.textContent = "📎 " + file.name + " — cole a URL pública da imagem no campo abaixo, ou adicione sua key imgbb para upload automático.";
+    status.textContent = "📎 " + file.name + " — imagem pronta para usar localmente. Para URL pública: cole no campo abaixo ou adicione key imgbb.";
     return;
   }
 
@@ -454,6 +460,7 @@ async function handleImageUpload(input) {
   try {
     const url = await uploadImage(file);
     urlField.value = url;
+    _localImageDataUrl = null;
     status.textContent = "✅ " + file.name + " — URL gerada!";
     status.style.color = "#22c55e";
   } catch (e) {
@@ -463,7 +470,7 @@ async function handleImageUpload(input) {
 }
 
 function getImageUrl() {
-  return document.getElementById("imageUrl").value.trim() || null;
+  return document.getElementById("imageUrl").value.trim() || _localImageDataUrl || null;
 }
 
 function cleanText(text) {
@@ -481,7 +488,7 @@ function validateImageUrl(url) {
     alert("URL inválida: contém [ ] — cole uma URL real.");
     return false;
   }
-  if (!url.startsWith("http")) {
+  if (!url.startsWith("http") && !url.startsWith("data:")) {
     alert("URL inválida: deve começar com http ou https.");
     return false;
   }
