@@ -223,20 +223,19 @@ function buildSceneBase(modelo) {
   return {
     veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
     style: estiloAtual,
-    reference: {
-      base_image: "FRAME 1",
-      instruction: "USE FRAME 1 AS ABSOLUTE REFERENCE FOR ALL CHARACTERS",
-      lock_identity: true,
-      lock_face: true,
-      lock_fur_pattern: true,
-      lock_body_structure: true
+    input_frame: {
+      type: "image",
+      role: "FIRST_FRAME",
+      priority: "absolute",
+      instruction: "THIS IMAGE DEFINES CHARACTER IDENTITY. DO NOT CHANGE ANY CHARACTER"
     },
-    identity_rules: {
-      STRICT_IDENTITY_LOCK: true,
-      NO_REINTERPRETATION: true,
-      NO_NEW_CHARACTER_VARIATION: true,
-      FACE_CONSISTENCY_PRIORITY: "maximum",
-      IGNORE_STYLE_DRIFT: true
+    character_consistency: {
+      mode: "STRICT_FROM_INPUT_FRAME",
+      preserve_face: true,
+      preserve_fur: true,
+      preserve_proportions: true,
+      no_new_interpretation: true,
+      consistency_priority: "maximum"
     },
     scene: {
       type: "podcast_studio",
@@ -246,7 +245,7 @@ function buildSceneBase(modelo) {
     },
     environment: {
       background: "blurred dark studio bokeh",
-      rule: "CHANGE BACKGROUND ONLY, KEEP CHARACTERS EXACTLY THE SAME AS FRAME 1"
+      rule: "BACKGROUND MAY CHANGE, BUT CHARACTERS MUST REMAIN IDENTICAL TO INPUT FRAME"
     },
     camera: {
       shot: "fixed medium shot",
@@ -257,26 +256,16 @@ function buildSceneBase(modelo) {
     },
     characters: [
       {
-        id: "character_LEFT",
+        id: "cat",
         position: "LEFT",
-        species: "realistic gray cat",
-        appearance: "EXACT SAME CHARACTER FROM FRAME 1, identical face, identical fur pattern, identical proportions, DO NOT CHANGE ANY DETAIL",
-        clothes: false,
-        accessories: false,
-        humanization: false,
-        voice_id: "Rasalgethi",
-        appearance_locked: true
+        instruction: "USE EXACT CAT FROM INPUT FRAME, DO NOT MODIFY",
+        voice_id: "Rasalgethi"
       },
       {
-        id: "character_RIGHT",
+        id: "dog",
         position: "RIGHT",
-        species: "realistic caramel dog",
-        appearance: "EXACT SAME CHARACTER FROM FRAME 1, identical face, identical fur pattern, identical proportions, DO NOT CHANGE ANY DETAIL",
-        clothes: false,
-        accessories: false,
-        humanization: false,
-        voice_id: "Achird",
-        appearance_locked: true
+        instruction: "USE EXACT DOG FROM INPUT FRAME, DO NOT MODIFY",
+        voice_id: "Achird"
       }
     ],
     rules: {
@@ -393,13 +382,14 @@ const FACIAL = {
     final_mouth:  "closed relaxed smile"
   },
   engracado: {
-    speak_first:  "smirk, barely holding laugh",
-    speak_second: "confused blinking",
-    pause:        "holding back laughter",
-    final_action: "both_laugh_hard",
-    final_expr:   "uncontrolled laughter",
-    final_mouth:  "wide open laugh",
-    final_sound:  "loud natural laughter"
+    speak_first:   "smirk, barely holding laugh",
+    speak_second:  "confused blinking",
+    pause:         "holding back laughter",
+    final_action:  "both_laugh_uncontrolled",
+    final_expr:    "extreme laughter",
+    final_mouth:   "wide open",
+    final_sound:   "LOUD BRAZILIAN LAUGHTER HAHAHA",
+    final_audio:   "laughter_dominant"
   },
   treta: {
     speak_first:  "provocative intense stare",
@@ -434,6 +424,7 @@ function buildSeq(first, firstLine, firstTone, second, secondLine, secondTone, o
     lip_sync: false
   };
   if (f.final_sound) finalBlock.sound = f.final_sound;
+  if (f.final_audio) finalBlock.audio_priority = f.final_audio;
 
   return [
     {
