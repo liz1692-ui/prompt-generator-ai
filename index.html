@@ -196,16 +196,16 @@ textarea {
   </label>
   <div id="imagePanel" style="display:none; margin-top:10px">
     <div id="imgbbConfig" style="padding:10px; background:#1e293b; border-radius:8px; font-size:12px; color:#94a3b8; margin-bottom:8px">
-      🔑 imgbb API Key — <a href="https://imgbb.com/api" target="_blank" style="color:#60a5fa">usar a sua key</a> (opcional, deixe vazio para upload automático)<br>
-      <input type="text" id="imgbbKey" placeholder="Deixe vazio — upload funciona sem key" style="margin-top:6px; font-size:12px">
+      🔑 imgbb API Key — <a href="https://imgbb.com/api" target="_blank" style="color:#60a5fa">obter key gratuita</a> (para upload automático)<br>
+      <input type="text" id="imgbbKey" placeholder="Cole sua key aqui para upload automático" style="margin-top:6px; font-size:12px">
     </div>
     <div class="btn-group">
-      <button class="upload" onclick="document.getElementById('fileInput').click()">📁 Selecionar imagem</button>
+      <button class="upload" onclick="document.getElementById('fileInput').click()">📁 Pré-visualizar imagem</button>
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
     <div class="img-status" id="imgStatus"></div>
     <img id="imgPreview" src="" alt="" style="display:none; width:100%; margin-top:10px; border-radius:8px; max-height:200px; object-fit:cover">
-    <input type="text" id="imageUrl" placeholder="URL gerada automaticamente" style="margin-top:8px; opacity:0.7" readonly>
+    <input type="text" id="imageUrl" placeholder="Cole aqui a URL pública da imagem" style="margin-top:8px">
     <select id="posEsquerda" style="margin-top:8px">
       <option value="cat">🐱 Gato está à esquerda</option>
       <option value="dog">🐶 Cachorro está à esquerda</option>
@@ -418,29 +418,15 @@ document.getElementById("useImageBase").addEventListener("change", function() {
 });
 
 async function uploadImage(file) {
-  const customKey = document.getElementById("imgbbKey").value.trim();
-
-  if (customKey) {
-    const formData = new FormData();
-    formData.append("image", file);
-    const res = await fetch("https://api.imgbb.com/1/upload?key=" + customKey, {
-      method: "POST", body: formData
-    });
-    if (!res.ok) throw new Error("Upload falhou: " + res.status);
-    const data = await res.json();
-    return data.data.url;
-  }
-
-  // Sem key: usa freeimage.host com key demo pública (CORS habilitado)
+  const key = document.getElementById("imgbbKey").value.trim();
   const formData = new FormData();
   formData.append("image", file);
-  const res = await fetch("https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5", {
+  const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, {
     method: "POST", body: formData
   });
   if (!res.ok) throw new Error("Upload falhou: " + res.status);
   const data = await res.json();
-  if (!data.image?.url) throw new Error("Upload falhou: resposta inválida");
-  return data.image.url;
+  return data.data.url;
 }
 
 async function handleImageUpload(input) {
@@ -450,26 +436,26 @@ async function handleImageUpload(input) {
   const urlField = document.getElementById("imageUrl");
   const preview  = document.getElementById("imgPreview");
 
-  preview.style.display = "none";
-  urlField.value = "";
+  // Preview local imediato (sem CORS, sem upload)
+  const localUrl = URL.createObjectURL(file);
+  preview.src = localUrl;
+  preview.style.display = "block";
+
+  const customKey = document.getElementById("imgbbKey").value.trim();
+  if (!customKey) {
+    status.style.color = "#f59e0b";
+    status.textContent = "📎 " + file.name + " — cole a URL pública da imagem no campo abaixo, ou adicione sua key imgbb para upload automático.";
+    return;
+  }
+
   status.style.color = "#f59e0b";
   status.textContent = "⏳ Fazendo upload...";
 
   try {
     const url = await uploadImage(file);
-    if (url) {
-      urlField.value = url;
-      preview.src = url;
-      preview.style.display = "block";
-      status.textContent = "✅ " + file.name + " — pronto!";
-      status.style.color = "#22c55e";
-    } else {
-      const localUrl = URL.createObjectURL(file);
-      preview.src = localUrl;
-      preview.style.display = "block";
-      status.textContent = "⚠️ Sem API key — cole sua chave imgbb para gerar URL pública.";
-      status.style.color = "#f59e0b";
-    }
+    urlField.value = url;
+    status.textContent = "✅ " + file.name + " — URL gerada!";
+    status.style.color = "#22c55e";
   } catch (e) {
     status.textContent = "❌ " + e.message;
     status.style.color = "#ef4444";
