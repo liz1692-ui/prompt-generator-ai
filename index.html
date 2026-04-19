@@ -329,8 +329,8 @@ function gerar(modelo) {
   }
 
   if (imageMode) {
-    if (!imageUrl) { alert("Cole a URL da imagem."); return; }
-    if (!validateImageUrl(imageUrl)) return;
+    if (!imageUrl) imageUrl = "COLE_AQUI_URL_PUBLICA_DA_IMAGEM";
+    else if (!validateImageUrl(imageUrl)) return;
   }
 
   const tom = TONS[estiloAtual];
@@ -470,7 +470,7 @@ async function handleImageUpload(input) {
 }
 
 function getImageUrl() {
-  return document.getElementById("imageUrl").value.trim() || _localImageDataUrl || null;
+  return document.getElementById("imageUrl").value.trim() || null;
 }
 
 function cleanText(text) {
@@ -488,7 +488,7 @@ function validateImageUrl(url) {
     alert("URL inválida: contém [ ] — cole uma URL real.");
     return false;
   }
-  if (!url.startsWith("http") && !url.startsWith("data:")) {
+  if (!url.startsWith("http") && !url.startsWith("COLE_")) {
     alert("URL inválida: deve começar com http ou https.");
     return false;
   }
