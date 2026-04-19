@@ -86,6 +86,14 @@ button:not(.ativo):hover { opacity: 0.9; }
 .copiar   { background: #1e293b; }
 .limpar   { background: #334155; }
 .continuar{ background: #8b5cf6; }
+.upload   { background: #0ea5e9; }
+
+.img-status {
+  font-size: 12px;
+  color: #60a5fa;
+  margin-top: 8px;
+  min-height: 16px;
+}
 
 .toggle-box {
   display: flex;
@@ -181,6 +189,22 @@ textarea {
 </div>
 
 <div class="box">
+  <h3>🖼️ Imagem Base</h3>
+  <label class="toggle-box" for="useImageBase">
+    <input type="checkbox" id="useImageBase">
+    <span>Usar imagem como base da cena</span>
+  </label>
+  <div id="imagePanel" style="display:none; margin-top:10px">
+    <input type="text" id="imageUrl" placeholder="Cole a URL da imagem aqui">
+    <div class="btn-group" style="margin-top:8px">
+      <button class="upload" onclick="document.getElementById('fileInput').click()">📁 Selecionar arquivo</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+    <div class="img-status" id="imgStatus"></div>
+  </div>
+</div>
+
+<div class="box">
   <label class="toggle-box" for="strictDialogueMode">
     <input type="checkbox" id="strictDialogueMode" checked>
     <span>🔒 Modo de Diálogo Estrito</span>
@@ -219,10 +243,79 @@ function setEstilo(estilo, btn) {
   btn.classList.add("ativo");
 }
 
-function buildSceneBase(modelo) {
-  return {
+function buildSceneBase(modelo, imageMode, imageUrl) {
+
+  const base = {
     veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
     style: estiloAtual,
+    camera: {
+      shot: "fixed medium shot",
+      cuts: false,
+      zoom: false,
+      pan: false,
+      movement: false
+    },
+    rules: {
+      swap_characters: false,
+      swap_dialogue: false,
+      swap_voices: false,
+      lip_sync: "only_active_speaker",
+      simultaneous_speech: false,
+      add_scene_elements: false,
+      modify_appearance: false,
+      modify_set: false,
+      DO_NOT_CHANGE_CHARACTER_APPEARANCE: true,
+      LOCK_CHARACTER_IDENTITY_STRONG: true,
+      CHARACTER_CONSISTENCY_PRIORITY: "maximum"
+    }
+  };
+
+  if (imageMode && imageUrl) {
+    return {
+      ...base,
+      render_mode: "animate_from_image",
+      input_frame: {
+        type: "image",
+        url: imageUrl,
+        role: "FIRST_FRAME",
+        priority: "absolute",
+        instruction: "THIS IMAGE DEFINES CHARACTER IDENTITY. DO NOT CHANGE ANY CHARACTER"
+      },
+      character_consistency: {
+        mode: "STRICT_FROM_INPUT_FRAME",
+        preserve_face: true,
+        preserve_fur: true,
+        preserve_proportions: true,
+        no_new_interpretation: true,
+        consistency_priority: "maximum"
+      },
+      scene: {
+        source: "input_frame",
+        preserve_composition: true,
+        rule: "DO NOT RECREATE ANY CHARACTER OR OBJECT"
+      },
+      generation_rules: {
+        mode: "image_to_video",
+        character_policy: "preserve_from_input",
+        allow_new_characters: false,
+        allow_face_change: false,
+        allow_body_change: false,
+        allow_reinterpretation: false,
+        priority: "image_over_prompt"
+      },
+      environment: {
+        background_override: "blurred dark studio bokeh",
+        rule: "REPLACE BACKGROUND ONLY, KEEP ALL SUBJECTS FROM INPUT IMAGE UNCHANGED"
+      },
+      characters: [
+        { id: "cat", position: "LEFT", instruction: "USE CHARACTER EXACTLY AS IN INPUT IMAGE", voice_id: "Rasalgethi" },
+        { id: "dog", position: "RIGHT", instruction: "USE CHARACTER EXACTLY AS IN INPUT IMAGE", voice_id: "Achird" }
+      ]
+    };
+  }
+
+  return {
+    ...base,
     input_frame: {
       type: "image",
       role: "FIRST_FRAME",
@@ -238,62 +331,41 @@ function buildSceneBase(modelo) {
       consistency_priority: "maximum"
     },
     scene: {
-      type: "podcast_studio",
+      source: "input_frame",
       lighting: "warm cinematic amber",
       props: ["two microphones", "two black podcast mugs", "desk"],
-      realism: "photorealistic"
+      realism: "photorealistic",
+      preserve_composition: true,
+      rule: "DO NOT RECREATE ANY CHARACTER OR OBJECT"
     },
     environment: {
       background: "blurred dark studio bokeh",
       rule: "BACKGROUND MAY CHANGE, BUT CHARACTERS MUST REMAIN IDENTICAL TO INPUT FRAME"
     },
-    camera: {
-      shot: "fixed medium shot",
-      cuts: false,
-      zoom: false,
-      pan: false,
-      movement: false
-    },
     characters: [
-      {
-        id: "cat",
-        position: "LEFT",
-        instruction: "USE EXACT CAT FROM INPUT FRAME, DO NOT MODIFY",
-        voice_id: "Rasalgethi"
-      },
-      {
-        id: "dog",
-        position: "RIGHT",
-        instruction: "USE EXACT DOG FROM INPUT FRAME, DO NOT MODIFY",
-        voice_id: "Achird"
-      }
-    ],
-    rules: {
-      swap_characters: false,
-      swap_dialogue: false,
-      swap_voices: false,
-      lip_sync: "only_active_speaker",
-      simultaneous_speech: false,
-      add_scene_elements: false,
-      modify_appearance: false,
-      modify_set: false,
-      DO_NOT_CHANGE_CHARACTER_APPEARANCE: true,
-      LOCK_CHARACTER_IDENTITY_STRONG: true,
-      CHARACTER_CONSISTENCY_PRIORITY: "maximum"
-    }
+      { id: "cat", position: "LEFT", instruction: "USE EXACT CAT FROM INPUT FRAME, DO NOT MODIFY", voice_id: "Rasalgethi" },
+      { id: "dog", position: "RIGHT", instruction: "USE EXACT DOG FROM INPUT FRAME, DO NOT MODIFY", voice_id: "Achird" }
+    ]
   };
 }
 
 function gerar(modelo) {
 
-  const gato     = document.getElementById("gato").value.trim();
-  const cachorro = document.getElementById("cachorro").value.trim();
+  const gato     = cleanText(document.getElementById("gato").value.trim());
+  const cachorro = cleanText(document.getElementById("cachorro").value.trim());
   const quem     = document.getElementById("quem").value;
   const continuar = document.getElementById("continuarCena").checked;
   const strict    = document.getElementById("strictDialogueMode").checked;
+  const imageMode = document.getElementById("useImageBase").checked;
+  const imageUrl  = getImageUrl();
 
   if (!gato || !cachorro) {
     alert("Preencha as falas do gato e do cachorro!");
+    return;
+  }
+
+  if (imageMode && !imageUrl) {
+    alert("Cole a URL da imagem ou selecione um arquivo.");
     return;
   }
 
@@ -310,7 +382,7 @@ function gerar(modelo) {
 
   const seq1 = buildAndValidate(first, fl, ft, second, sl, st, 0);
 
-  const base = buildSceneBase(modelo);
+  const base = buildSceneBase(modelo, imageMode, imageUrl);
   const rules = strict
     ? { ...base.rules, ...strictRules() }
     : base.rules;
@@ -368,6 +440,32 @@ function gerarComContinuacao() {
   document.getElementById("continuarCena").checked = true;
   const modelo = "lite";
   gerar(modelo);
+}
+
+document.getElementById("useImageBase").addEventListener("change", function() {
+  document.getElementById("imagePanel").style.display = this.checked ? "block" : "none";
+});
+
+function handleImageUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  document.getElementById("imgStatus").textContent = "✅ " + file.name + " — cole a URL pública abaixo para incluir no JSON";
+}
+
+function getImageUrl() {
+  const typed = document.getElementById("imageUrl").value.trim();
+  if (typed) return typed;
+  const fi = document.getElementById("fileInput");
+  if (fi.files && fi.files[0]) return "[COLE_URL_DA_IMAGEM_AQUI: " + fi.files[0].name + "]";
+  return null;
+}
+
+function cleanText(text) {
+  return text
+    .replace(/\.\.\./g, "")
+    .replace(/([!?;:]){2,}/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const VOICE_MAP = { cat: "Rasalgethi", dog: "Achird" };
@@ -527,6 +625,11 @@ function limpar() {
   document.getElementById("saida").value = "";
   document.getElementById("status").textContent = "";
   document.getElementById("continuarCena").checked = false;
+  document.getElementById("useImageBase").checked = false;
+  document.getElementById("imagePanel").style.display = "none";
+  document.getElementById("imageUrl").value = "";
+  document.getElementById("fileInput").value = "";
+  document.getElementById("imgStatus").textContent = "";
 }
 
 </script>
