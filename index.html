@@ -321,7 +321,7 @@ function gerar(modelo) {
   const continuar = document.getElementById("continuarCena").checked;
   const strict    = document.getElementById("strictDialogueMode").checked;
   const imageMode = document.getElementById("useImageBase").checked;
-  const imageUrl  = getImageUrl();
+  let imageUrl    = getImageUrl();
 
   if (!gato || !cachorro) {
     alert("Preencha as falas do gato e do cachorro!");
