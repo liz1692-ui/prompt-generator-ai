@@ -195,21 +195,21 @@ textarea {
     <span>Usar imagem como base da cena</span>
   </label>
   <div id="imagePanel" style="display:none; margin-top:10px">
+    <div id="imgbbConfig" style="padding:10px; background:#1e293b; border-radius:8px; font-size:12px; color:#94a3b8; margin-bottom:8px">
+      🔑 imgbb API Key — <a href="https://imgbb.com/api" target="_blank" style="color:#60a5fa">obter grátis</a><br>
+      <input type="text" id="imgbbKey" placeholder="Cole sua API key aqui" style="margin-top:6px; font-size:12px">
+    </div>
     <div class="btn-group">
       <button class="upload" onclick="document.getElementById('fileInput').click()">📁 Selecionar imagem</button>
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
     <div class="img-status" id="imgStatus"></div>
-    <input type="text" id="imageUrl" placeholder="URL gerada automaticamente (ou cole manualmente)" style="margin-top:8px; opacity:0.7">
+    <img id="imgPreview" src="" alt="" style="display:none; width:100%; margin-top:10px; border-radius:8px; max-height:200px; object-fit:cover">
+    <input type="text" id="imageUrl" placeholder="URL gerada automaticamente" style="margin-top:8px; opacity:0.7" readonly>
     <select id="posEsquerda" style="margin-top:8px">
       <option value="cat">🐱 Gato está à esquerda</option>
       <option value="dog">🐶 Cachorro está à esquerda</option>
     </select>
-    <div id="cloudConfig" style="margin-top:10px; padding:10px; background:#1e293b; border-radius:8px; font-size:12px; color:#94a3b8">
-      ⚙️ Cloudinary (necessário para upload automático)<br>
-      <input type="text" id="cloudName"  placeholder="Cloud name (ex: meucloud)"  style="margin-top:6px; font-size:12px">
-      <input type="text" id="uploadPreset" placeholder="Upload preset (ex: unsigned_preset)" style="margin-top:6px; font-size:12px">
-    </div>
   </div>
 </div>
 
@@ -418,47 +418,51 @@ document.getElementById("useImageBase").addEventListener("change", function() {
 });
 
 async function uploadImage(file) {
-  const cloudName   = document.getElementById("cloudName").value.trim();
-  const uploadPreset = document.getElementById("uploadPreset").value.trim();
-
-  if (!cloudName || !uploadPreset) return null;
+  const key = document.getElementById("imgbbKey").value.trim();
+  if (!key) return null;
 
   const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", uploadPreset);
+  formData.append("image", file);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+  const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, {
     method: "POST",
     body: formData
   });
 
   if (!res.ok) throw new Error("Upload falhou: " + res.status);
   const data = await res.json();
-  return data.secure_url;
+  return data.data.url;
 }
 
 async function handleImageUpload(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  const status = document.getElementById("imgStatus");
+  const status   = document.getElementById("imgStatus");
   const urlField = document.getElementById("imageUrl");
+  const preview  = document.getElementById("imgPreview");
 
-  status.textContent = "⏳ Fazendo upload...";
+  preview.style.display = "none";
+  urlField.value = "";
   status.style.color = "#f59e0b";
+  status.textContent = "⏳ Fazendo upload...";
 
   try {
     const url = await uploadImage(file);
     if (url) {
       urlField.value = url;
-      status.textContent = "✅ Upload concluído: " + file.name;
+      preview.src = url;
+      preview.style.display = "block";
+      status.textContent = "✅ " + file.name + " — pronto!";
       status.style.color = "#22c55e";
     } else {
-      urlField.value = "";
-      status.textContent = "⚠️ Configure Cloud name e Upload preset para upload automático. Ou cole a URL manualmente.";
+      const localUrl = URL.createObjectURL(file);
+      preview.src = localUrl;
+      preview.style.display = "block";
+      status.textContent = "⚠️ Sem API key — cole sua chave imgbb para gerar URL pública.";
       status.style.color = "#f59e0b";
     }
   } catch (e) {
-    status.textContent = "❌ Erro no upload: " + e.message;
+    status.textContent = "❌ " + e.message;
     status.style.color = "#ef4444";
   }
 }
@@ -643,18 +647,15 @@ function limpar() {
   document.getElementById("imageUrl").value = "";
   document.getElementById("fileInput").value = "";
   document.getElementById("imgStatus").textContent = "";
+  const p = document.getElementById("imgPreview");
+  p.src = ""; p.style.display = "none";
 }
 
-(function initCloudConfig() {
-  const cn = localStorage.getItem("veo_cloudName");
-  const up = localStorage.getItem("veo_uploadPreset");
-  if (cn) document.getElementById("cloudName").value = cn;
-  if (up) document.getElementById("uploadPreset").value = up;
-
-  ["cloudName", "uploadPreset"].forEach(id => {
-    document.getElementById(id).addEventListener("input", function() {
-      localStorage.setItem("veo_" + id, this.value.trim());
-    });
+(function init() {
+  const key = localStorage.getItem("veo_imgbbKey");
+  if (key) document.getElementById("imgbbKey").value = key;
+  document.getElementById("imgbbKey").addEventListener("input", function() {
+    localStorage.setItem("veo_imgbbKey", this.value.trim());
   });
 })();
 
