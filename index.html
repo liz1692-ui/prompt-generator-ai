@@ -196,8 +196,8 @@ textarea {
   </label>
   <div id="imagePanel" style="display:none; margin-top:10px">
     <div id="imgbbConfig" style="padding:10px; background:#1e293b; border-radius:8px; font-size:12px; color:#94a3b8; margin-bottom:8px">
-      🔑 imgbb API Key — <a href="https://imgbb.com/api" target="_blank" style="color:#60a5fa">obter grátis</a><br>
-      <input type="text" id="imgbbKey" placeholder="Cole sua API key aqui" style="margin-top:6px; font-size:12px">
+      🔑 imgbb API Key — <a href="https://imgbb.com/api" target="_blank" style="color:#60a5fa">usar a sua key</a> (opcional)<br>
+      <input type="text" id="imgbbKey" placeholder="Deixe vazio para usar key padrão" style="margin-top:6px; font-size:12px">
     </div>
     <div class="btn-group">
       <button class="upload" onclick="document.getElementById('fileInput').click()">📁 Selecionar imagem</button>
@@ -418,8 +418,7 @@ document.getElementById("useImageBase").addEventListener("change", function() {
 });
 
 async function uploadImage(file) {
-  const key = document.getElementById("imgbbKey").value.trim();
-  if (!key) return null;
+  const key = document.getElementById("imgbbKey").value.trim() || "6d207e02198a847aa98d0a2a901485a5";
 
   const formData = new FormData();
   formData.append("image", file);
