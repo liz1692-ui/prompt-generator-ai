@@ -195,7 +195,11 @@ textarea {
     <span>Usar imagem como base da cena</span>
   </label>
   <div id="imagePanel" style="display:none; margin-top:10px">
-    <input type="text" id="imageUrl" placeholder="Cole a URL da imagem aqui">
+    <input type="text" id="imageUrl" placeholder="Cole a URL da imagem aqui (obrigatório: https://...)">
+    <select id="posEsquerda" style="margin-top:8px">
+      <option value="cat">🐱 Gato está à esquerda</option>
+      <option value="dog">🐶 Cachorro está à esquerda</option>
+    </select>
     <div class="btn-group" style="margin-top:8px">
       <button class="upload" onclick="document.getElementById('fileInput').click()">📁 Selecionar arquivo</button>
     </div>
@@ -245,9 +249,34 @@ function setEstilo(estilo, btn) {
 
 function buildSceneBase(modelo, imageMode, imageUrl) {
 
-  const base = {
+  const posEsq = imageMode
+    ? (document.getElementById("posEsquerda").value)
+    : "cat";
+  const posDir = posEsq === "cat" ? "dog" : "cat";
+  const voiceMap = { cat: "Rasalgethi", dog: "Achird" };
+
+  const characters = [
+    { id: posEsq, position: "LEFT",  instruction: "USE CHARACTER EXACTLY AS IN INPUT IMAGE", voice_id: voiceMap[posEsq] },
+    { id: posDir, position: "RIGHT", instruction: "USE CHARACTER EXACTLY AS IN INPUT IMAGE", voice_id: voiceMap[posDir] }
+  ];
+
+  const frameBlock = imageUrl
+    ? { type: "image", url: imageUrl, role: "FIRST_FRAME", priority: "absolute", instruction: "THIS IMAGE DEFINES CHARACTER IDENTITY. DO NOT CHANGE ANY CHARACTER" }
+    : { type: "image", role: "FIRST_FRAME", priority: "absolute", instruction: "THIS IMAGE DEFINES CHARACTER IDENTITY. DO NOT CHANGE ANY CHARACTER" };
+
+  const json = {
     veo_model: modelo === "lite" ? "VEO_LITE" : "VEO_FAST",
     style: estiloAtual,
+    render_mode: "animate_from_image",
+    input_frame: frameBlock,
+    scene: {
+      source: "input_frame",
+      preserve_composition: true
+    },
+    environment: {
+      background: "blurred dark studio bokeh",
+      rule: "REPLACE BACKGROUND ONLY, KEEP ALL SUBJECTS FROM INPUT IMAGE UNCHANGED"
+    },
     camera: {
       shot: "fixed medium shot",
       cuts: false,
@@ -255,98 +284,28 @@ function buildSceneBase(modelo, imageMode, imageUrl) {
       pan: false,
       movement: false
     },
+    characters,
     rules: {
-      swap_characters: false,
-      swap_dialogue: false,
-      swap_voices: false,
-      lip_sync: "only_active_speaker",
-      simultaneous_speech: false,
-      add_scene_elements: false,
-      modify_appearance: false,
-      modify_set: false,
-      DO_NOT_CHANGE_CHARACTER_APPEARANCE: true,
-      LOCK_CHARACTER_IDENTITY_STRONG: true,
-      CHARACTER_CONSISTENCY_PRIORITY: "maximum"
+      STRICT_SPEAKER_MODE: true,
+      ONLY_ONE_SPEAKER_PER_BLOCK: true,
+      LOCK_VOICE_TO_CHARACTER: true,
+      FORCE_LIP_SYNC: true
     }
   };
 
   if (imageMode && imageUrl) {
-    return {
-      ...base,
-      render_mode: "animate_from_image",
-      input_frame: {
-        type: "image",
-        url: imageUrl,
-        role: "FIRST_FRAME",
-        priority: "absolute",
-        instruction: "THIS IMAGE DEFINES CHARACTER IDENTITY. DO NOT CHANGE ANY CHARACTER"
-      },
-      character_consistency: {
-        mode: "STRICT_FROM_INPUT_FRAME",
-        preserve_face: true,
-        preserve_fur: true,
-        preserve_proportions: true,
-        no_new_interpretation: true,
-        consistency_priority: "maximum"
-      },
-      scene: {
-        source: "input_frame",
-        preserve_composition: true,
-        rule: "DO NOT RECREATE ANY CHARACTER OR OBJECT"
-      },
-      generation_rules: {
-        mode: "image_to_video",
-        character_policy: "preserve_from_input",
-        allow_new_characters: false,
-        allow_face_change: false,
-        allow_body_change: false,
-        allow_reinterpretation: false,
-        priority: "image_over_prompt"
-      },
-      environment: {
-        background_override: "blurred dark studio bokeh",
-        rule: "REPLACE BACKGROUND ONLY, KEEP ALL SUBJECTS FROM INPUT IMAGE UNCHANGED"
-      },
-      characters: [
-        { id: "cat", position: "LEFT", instruction: "USE CHARACTER EXACTLY AS IN INPUT IMAGE", voice_id: "Rasalgethi" },
-        { id: "dog", position: "RIGHT", instruction: "USE CHARACTER EXACTLY AS IN INPUT IMAGE", voice_id: "Achird" }
-      ]
+    json.generation_rules = {
+      mode: "image_to_video",
+      character_policy: "preserve_from_input",
+      allow_new_characters: false,
+      allow_face_change: false,
+      allow_body_change: false,
+      allow_reinterpretation: false,
+      priority: "image_over_prompt"
     };
   }
 
-  return {
-    ...base,
-    input_frame: {
-      type: "image",
-      role: "FIRST_FRAME",
-      priority: "absolute",
-      instruction: "THIS IMAGE DEFINES CHARACTER IDENTITY. DO NOT CHANGE ANY CHARACTER"
-    },
-    character_consistency: {
-      mode: "STRICT_FROM_INPUT_FRAME",
-      preserve_face: true,
-      preserve_fur: true,
-      preserve_proportions: true,
-      no_new_interpretation: true,
-      consistency_priority: "maximum"
-    },
-    scene: {
-      source: "input_frame",
-      lighting: "warm cinematic amber",
-      props: ["two microphones", "two black podcast mugs", "desk"],
-      realism: "photorealistic",
-      preserve_composition: true,
-      rule: "DO NOT RECREATE ANY CHARACTER OR OBJECT"
-    },
-    environment: {
-      background: "blurred dark studio bokeh",
-      rule: "BACKGROUND MAY CHANGE, BUT CHARACTERS MUST REMAIN IDENTICAL TO INPUT FRAME"
-    },
-    characters: [
-      { id: "cat", position: "LEFT", instruction: "USE EXACT CAT FROM INPUT FRAME, DO NOT MODIFY", voice_id: "Rasalgethi" },
-      { id: "dog", position: "RIGHT", instruction: "USE EXACT DOG FROM INPUT FRAME, DO NOT MODIFY", voice_id: "Achird" }
-    ]
-  };
+  return json;
 }
 
 function gerar(modelo) {
@@ -364,9 +323,9 @@ function gerar(modelo) {
     return;
   }
 
-  if (imageMode && !imageUrl) {
-    alert("Cole a URL da imagem ou selecione um arquivo.");
-    return;
+  if (imageMode) {
+    if (!imageUrl) { alert("Cole a URL da imagem."); return; }
+    if (!validateImageUrl(imageUrl)) return;
   }
 
   const tom = TONS[estiloAtual];
@@ -389,11 +348,17 @@ function gerar(modelo) {
 
   let json;
 
+  const speakerPriority = {
+    first_speaker: first,
+    enforce_order: true
+  };
+
   if (!continuar) {
     json = {
       ...base,
       camera: { ...base.camera, duration_seconds: 8 },
       rules,
+      speaker_priority: speakerPriority,
       sequence: seq1
     };
   } else {
@@ -403,6 +368,7 @@ function gerar(modelo) {
       ...base,
       camera: { ...base.camera, duration_seconds: 16 },
       rules,
+      speaker_priority: speakerPriority,
       continuation_rules: {
         no_restart: true,
         same_characters: true,
@@ -464,8 +430,22 @@ function cleanText(text) {
   return text
     .replace(/\.\.\./g, "")
     .replace(/([!?;:]){2,}/g, "$1")
+    .replace(/["""'']/g, "")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .split(" ").slice(0, 10).join(" ");
+}
+
+function validateImageUrl(url) {
+  if (url.includes("[") || url.includes("]")) {
+    alert("URL inválida: contém [ ] — cole uma URL real.");
+    return false;
+  }
+  if (!url.startsWith("http")) {
+    alert("URL inválida: deve começar com http ou https.");
+    return false;
+  }
+  return true;
 }
 
 const VOICE_MAP = { cat: "Rasalgethi", dog: "Achird" };
@@ -480,14 +460,13 @@ const FACIAL = {
     final_mouth:  "closed relaxed smile"
   },
   engracado: {
-    speak_first:   "smirk, barely holding laugh",
-    speak_second:  "confused blinking",
-    pause:         "holding back laughter",
-    final_action:  "both_laugh_uncontrolled",
-    final_expr:    "extreme laughter",
-    final_mouth:   "wide open",
-    final_sound:   "LOUD BRAZILIAN LAUGHTER HAHAHA",
-    final_audio:   "laughter_dominant"
+    speak_first:  "smirk, barely holding laugh",
+    speak_second: "confused blinking",
+    pause:        "holding back laughter",
+    final_action: "both_laugh",
+    final_expr:   "laughing",
+    final_mouth:  "wide open",
+    final_sound:  "HA HA HA"
   },
   treta: {
     speak_first:  "provocative intense stare",
@@ -597,15 +576,8 @@ function strictRules() {
   return {
     STRICT_SPEAKER_MODE: true,
     ONLY_ONE_SPEAKER_PER_BLOCK: true,
-    IGNORE_NON_SPEAKER_AUDIO: true,
     LOCK_VOICE_TO_CHARACTER: true,
-    NO_DIALOGUE_SWAP: true,
-    NO_VOICE_SWAP: true,
-    NO_ACTION_CONFUSION: true,
-    FORCE_LIP_SYNC: true,
-    FORCE_MOUTH_MOVEMENT: true,
-    MOUTH_MOVEMENT_STYLE: "clear exaggerated speaking motion",
-    DO_NOT_CHANGE_CHARACTER_APPEARANCE: true
+    FORCE_LIP_SYNC: true
   };
 }
 
