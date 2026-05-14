@@ -1,0 +1,9 @@
+services:
+  analista-instagram:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./playwright/data:/app/playwright/data
+      - ./playwright/.auth:/app/playwright/.auth
+    command: npm run ig:collect

@@ -25,11 +25,26 @@ python3 -m http.server 4173
 
 Depois acesse `http://127.0.0.1:4173/index.html`.
 
+## Módulo ANALISTA INSTAGRAM
+
+A automação real fica em `playwright/` e foi preparada para Playwright, Docker, n8n, JSON local e Supabase.
+
+```bash
+cp .env.example .env
+npm install
+npx playwright install chromium
+npm run ig:login
+npm run ig:collect
+```
+
+Leia o guia completo em [`playwright/README.md`](playwright/README.md).
+
 ## O que o app faz
 
 - Gera JSON para prompts VEO3 em formato de podcast com gato e cachorro.
 - Permite escolher estilo, modelo VEO, continuação de cena e imagem base.
 - Cria um plano de automação para Instagram seguindo o fluxo: análise → IA decide → cria roteiro → cria prompt → gera vídeo → publica via API oficial.
+- Coleta Reels recentes com delays humanos e salva dados em JSON/Supabase pelo módulo `playwright/`.
 
 ## Observação sobre Instagram
 

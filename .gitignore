@@ -1,0 +1,5 @@
+.env
+node_modules/
+playwright/.auth/
+playwright/data/*.json
+!playwright/examples/*.json
