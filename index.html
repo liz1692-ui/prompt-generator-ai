@@ -36,7 +36,7 @@ h2 {
   letter-spacing: 1px;
 }
 
-input, select {
+input, select, textarea.input-area {
   width: 100%;
   padding: 12px;
   margin-top: 8px;
@@ -48,6 +48,51 @@ input, select {
 }
 
 input:first-child { margin-top: 0; }
+
+textarea.input-area {
+  height: 88px;
+  resize: vertical;
+  font-family: Arial;
+  color: white;
+  border: none;
+}
+
+.help-text {
+  margin: 8px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.flow-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #312e81;
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.warning {
+  background: #451a03;
+  border: 1px solid #92400e;
+  border-radius: 10px;
+  color: #fdba74;
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 10px;
+  margin-top: 10px;
+}
 
 .btn-group {
   display: flex;
@@ -87,6 +132,8 @@ button:not(.ativo):hover { opacity: 0.9; }
 .limpar   { background: #334155; }
 .continuar{ background: #8b5cf6; }
 .upload   { background: #0ea5e9; }
+.auto     { background: #db2777; }
+.workflow { background: #14b8a6; color: #001; }
 
 .img-status {
   font-size: 12px;
@@ -170,6 +217,33 @@ textarea {
   </div>
 </div>
 
+
+<div class="box">
+  <h3>🚀 Automação Instagram</h3>
+  <span class="badge">Fluxo recomendado: analisar → decidir → roteirizar → prompt → vídeo → aprovação → postar</span>
+  <ol class="flow-list">
+    <li>Coletar métricas de posts/Reels autorizados pela API oficial.</li>
+    <li>IA escolhe ângulo, gancho, formato, duração e CTA.</li>
+    <li>Gerar roteiro curto e transformar em prompt VEO.</li>
+    <li>Gerar vídeo em ferramenta externa e salvar URL pública do arquivo.</li>
+    <li>Publicar via Instagram Graph API somente em conta profissional aprovada.</li>
+  </ol>
+  <div class="warning">
+    ⚠️ O navegador não deve guardar token secreto nem senha do Instagram. Use este gerador para criar o plano JSON e execute a publicação em um backend/n8n/Make com OAuth e aprovação humana opcional.
+  </div>
+  <input id="igPerfil" placeholder="@perfil ou nicho do Instagram">
+  <input id="igObjetivo" placeholder="Objetivo (ex: ganhar seguidores, vender produto, gerar leads)">
+  <textarea id="igDados" class="input-area" placeholder="Cole métricas, ideias, comentários ou links para análise (ex: Reel A: 12k views, 8% retenção, tema...)" ></textarea>
+  <select id="igPublicacao" style="margin-top:8px">
+    <option value="approval_first">Gerar plano com aprovação antes de postar</option>
+    <option value="auto_publish">Gerar plano para postagem automática</option>
+  </select>
+  <div class="btn-group" style="margin-top:10px">
+    <button class="auto" onclick="gerarFluxoInstagram()">Criar fluxo Instagram</button>
+    <button class="workflow" onclick="preencherRoteiroPeloFluxo()">Usar roteiro no prompt</button>
+  </div>
+</div>
+
 <div class="box">
   <h3>Modelo VEO</h3>
   <div class="btn-group">
@@ -240,6 +314,108 @@ const TONS = {
   treta:     { gato: "provocative bold",   cachorro: "irritated tense"  },
   viral:     { gato: "meme humor absurd",  cachorro: "shocking impactful"}
 };
+
+let ultimoFluxoInstagram = null;
+
+function summarizeInput(text, max = 420) {
+  const clean = cleanTextLong(text);
+  return clean.length > max ? clean.slice(0, max - 3) + "..." : clean;
+}
+
+function cleanTextLong(text) {
+  return (text || "")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function inferAngle(objetivo, dados) {
+  const base = `${objetivo} ${dados}`.toLowerCase();
+  if (base.includes("vender") || base.includes("produto") || base.includes("lead")) {
+    return "dor clara + promessa específica + prova rápida + CTA direto";
+  }
+  if (base.includes("seguidores") || base.includes("viral") || base.includes("views")) {
+    return "gancho polêmico/curioso + payoff rápido + loop para replay";
+  }
+  return "gancho forte + história curta + aprendizado útil + CTA simples";
+}
+
+function buildInstagramWorkflow() {
+  const perfil = cleanTextLong(document.getElementById("igPerfil").value) || "@seu_perfil";
+  const objetivo = cleanTextLong(document.getElementById("igObjetivo").value) || "crescer audiência com Reels curtos";
+  const dados = cleanTextLong(document.getElementById("igDados").value) || "sem métricas coladas; iniciar com hipótese de conteúdo viral";
+  const modo = document.getElementById("igPublicacao").value;
+  const angle = inferAngle(objetivo, dados);
+  const gatoLine = cleanText(`Eu analisei o perfil ${perfil} e o melhor gancho é simples`);
+  const dogLine = cleanText(`Faz o público ficar até o final e chama para agir`);
+
+  return {
+    workflow_name: "instagram_ai_video_pipeline",
+    version: "1.0",
+    safety_note: "Use apenas APIs oficiais, conta profissional, OAuth e revisão humana se houver risco de spam ou erro.",
+    trigger: {
+      type: "manual_or_scheduled",
+      schedule_example: "todo dia às 09:00",
+      source_profile_or_niche: perfil
+    },
+    input_analysis: {
+      objective: objetivo,
+      provided_data_summary: summarizeInput(dados),
+      metrics_to_collect: [
+        "views", "reach", "watch_time", "retention", "shares", "saves", "comments", "follows_from_post"
+      ],
+      decision_rule: "priorizar temas com maior retenção, salvamentos e compartilhamentos; evitar repetição excessiva"
+    },
+    ai_decision: {
+      recommended_angle: angle,
+      format: "Reel 8-16s com diálogo entre gato e cachorro",
+      style: estiloAtual,
+      first_speaker: document.getElementById("quem").value,
+      approval_mode: modo === "approval_first"
+    },
+    script: {
+      hook: "Você está postando errado se ignora este detalhe.",
+      cat_line: gatoLine,
+      dog_line: dogLine,
+      cta: "Comenta 'QUERO' para receber o próximo roteiro."
+    },
+    prompt_generation: {
+      tool: "este gerador VEO3",
+      action: "preencher falas, escolher estilo, gerar JSON e enviar ao gerador de vídeo",
+      recommended_model: "VEO_LITE para volume; VEO_FAST para teste principal"
+    },
+    video_generation: {
+      required_output: "mp4 vertical 9:16, URL pública HTTPS para publicação",
+      storage: "bucket/S3/Cloudinary/Drive público ou mídia retornada pela ferramenta de vídeo"
+    },
+    instagram_publish: {
+      method: "Instagram Graph API Content Publishing",
+      account_requirement: "Instagram profissional conectado a uma Página do Facebook e app com permissões aprovadas",
+      steps: [
+        "criar media container com video_url e caption",
+        "verificar status do container até FINISHED",
+        "publicar com media_publish",
+        "registrar permalink, id e métricas para a próxima análise"
+      ],
+      caption_template: "{hook}\n\n{cta}\n\n#reels #ia #conteudo #viral",
+      auto_publish_enabled: modo === "auto_publish"
+    }
+  };
+}
+
+function gerarFluxoInstagram() {
+  ultimoFluxoInstagram = buildInstagramWorkflow();
+  document.getElementById("saida").value = JSON.stringify(ultimoFluxoInstagram, null, 2);
+  document.getElementById("status").textContent = "Fluxo de automação Instagram gerado.";
+}
+
+function preencherRoteiroPeloFluxo() {
+  ultimoFluxoInstagram = ultimoFluxoInstagram || buildInstagramWorkflow();
+  document.getElementById("gato").value = ultimoFluxoInstagram.script.cat_line;
+  document.getElementById("cachorro").value = ultimoFluxoInstagram.script.dog_line;
+  document.getElementById("status").textContent = "Roteiro aplicado nas falas. Agora escolha VEO LITE ou VEO FAST.";
+}
 
 function setEstilo(estilo, btn) {
   estiloAtual = estilo;
@@ -643,6 +819,10 @@ function limpar() {
   document.getElementById("cachorro").value = "";
   document.getElementById("saida").value = "";
   document.getElementById("status").textContent = "";
+  document.getElementById("igPerfil").value = "";
+  document.getElementById("igObjetivo").value = "";
+  document.getElementById("igDados").value = "";
+  ultimoFluxoInstagram = null;
   document.getElementById("continuarCena").checked = false;
   document.getElementById("useImageBase").checked = false;
   document.getElementById("imagePanel").style.display = "none";
