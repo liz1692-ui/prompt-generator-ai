@@ -2,6 +2,29 @@
 
 Gerador automático de prompts para vídeos com gato e cachorro com voz consistente e lip sync perfeito.
 
+## Como ver o app
+
+### Opção 1 — pelo GitHub Pages
+
+1. Entre no repositório `liz1692-ui/prompt-generator-ai`.
+2. Clique em **Actions** e rode o workflow **Deploy static site to GitHub Pages** se ele ainda não tiver rodado.
+3. Depois, abra **Settings → Pages** e acesse o link publicado do site.
+4. A tela nova aparece no próprio app, na seção **🚀 Automação Instagram**, abaixo dos botões de estilo.
+
+> Se você estiver na tela inicial do GitHub, como no print, clique primeiro no repositório `liz1692-ui/prompt-generator-ai` na coluna **Top repositories**. A mudança não aparece na home do GitHub.
+
+### Opção 2 — no computador
+
+1. Baixe ou clone este repositório.
+2. Abra o arquivo `index.html` no navegador.
+3. Se quiser servir localmente, rode:
+
+```bash
+python3 -m http.server 4173
+```
+
+Depois acesse `http://127.0.0.1:4173/index.html`.
+
 ## O que o app faz
 
 - Gera JSON para prompts VEO3 em formato de podcast com gato e cachorro.
